@@ -1,0 +1,8 @@
+[package]
+name = "personal-file-share"
+version = "0.1.0"
+authors = ["Matt McClellan <mcclellan.mj@gmail.com>"]
+
+[dependencies]
+iron = "*"
+horrorshow = "0.5.6"
