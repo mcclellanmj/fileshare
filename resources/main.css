@@ -1,4 +1,29 @@
+:root {
+    --main-fg-color: #000;
+    --main-bg-color: #FFF;
+}
 html {
-    background-color: #000;
-    color: #0B0;
+    background-color: var(--main-bg-color);
+    color: var(--main-fg-color);
+}
+
+.file-list {
+    list-style-type: none;
+}
+
+.file-list-img {
+    background-color: #888;
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    margin: 0px 5px 0px 0px;
+}
+
+a {
+    text-decoration: none;
+    color: var(--main-fg-color);
+}
+
+a:hover {
+    color: blue;
 }

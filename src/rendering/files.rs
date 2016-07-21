@@ -8,6 +8,7 @@ fn render_file(entry: &DirEntry) -> Box<RenderBox> {
     let file_name = entry.file_name();
     box_html! {
         li {
+            span(class="file-list-img") : raw!("");
             a(href="#") : file_name.to_str().unwrap()
         }
     }
@@ -28,7 +29,7 @@ pub fn render<I: Iterator<Item=DirEntry>>(title: &str, files: I) -> String {
                 main {
                     header { h1 : title}
                     section(id="files") {
-                        ul {
+                        ul(class="file-list") {
                             @ for file in sorted_files {
                                 : render_file(&file);
                             }
