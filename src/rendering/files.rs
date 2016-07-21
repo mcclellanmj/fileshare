@@ -1,5 +1,6 @@
 use std::fs::DirEntry;
 use horrorshow::{RenderBox, Template};
+use filetools::dir;
 
 fn render_file(entry: &DirEntry) -> Box<RenderBox> {
     let file_name = entry.file_name();
@@ -9,6 +10,9 @@ fn render_file(entry: &DirEntry) -> Box<RenderBox> {
 }
 
 pub fn render<I: Iterator<Item=DirEntry>>(title: &str, files: I) -> String {
+    let mut sorted_files = files.collect::<Vec<DirEntry>>();
+    sorted_files.sort_by(dir::sort);
+
     (html! {
         : raw!("<!DOCTYPE html>");
         html {
@@ -19,7 +23,7 @@ pub fn render<I: Iterator<Item=DirEntry>>(title: &str, files: I) -> String {
                 main {
                     header { h1 : title}
                     section(id="files") {
-                        @ for file in files {
+                        @ for file in sorted_files {
                             : render_file(&file);
                         }
                     }

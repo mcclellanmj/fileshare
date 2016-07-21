@@ -3,6 +3,7 @@ extern crate horrorshow;
 extern crate iron;
 
 mod rendering;
+mod filetools;
 
 use iron::{Iron, Request, Response, IronResult};
 use iron::modifiers::{Header};
