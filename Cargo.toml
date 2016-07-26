@@ -4,5 +4,7 @@ version = "0.1.0"
 authors = ["Matt McClellan <mcclellan.mj@gmail.com>"]
 
 [dependencies]
-iron = "*"
+iron = "0.3.0"
 horrorshow = "0.5.6"
+router = "0.1.1"
+url = "1.1.*"
