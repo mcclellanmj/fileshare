@@ -63,15 +63,28 @@ fn main() {
             let param_map = param_map(params);
 
             let filenames = param_map.get("filename");
-            let filename = filenames.and_then(|f| f.first()).and_then(|x| if x.is_empty() {None} else {Some(x)});
+            let filename = filenames
+                .and_then(|f| f.first())
+                .and_then(|x| if x.is_empty() {None} else {
+                    // FIXME: These shouldn't use unwrap and the serve_dir is an issue since it
+                    // shouldn't need to happen everytime
+                    let download_file = Path::new(x).canonicalize().unwrap();
+                    let serve_dir = Path::new(".").canonicalize().unwrap();
+
+                    if download_file.starts_with(serve_dir) {
+                        Some(x)
+                    } else {
+                        None
+                    }
+                });
 
             if let Some(x) = filename {
                 Ok(Response::with((format!("Sending you the file [{}]", x))))
             } else {
-                Ok(Response::with(("Did not provide a file to download, sorry")))
+                Ok(Response::with(("Did not provide a valid file to download, sorry")))
             }
         } else {
-            Ok(Response::with(("Did not provide a file to download, sorry")))
+            Ok(Response::with(("Did not provide a valid file to download, sorry")))
         }
     }
 
