@@ -72,14 +72,14 @@ fn main() {
                     let serve_dir = Path::new(".").canonicalize().unwrap();
 
                     if download_file.starts_with(serve_dir) {
-                        Some(x)
+                        Some(download_file)
                     } else {
                         None
                     }
                 });
 
             if let Some(x) = filename {
-                Ok(Response::with((format!("Sending you the file [{}]", x))))
+                Ok(Response::with((status::Ok, x)))
             } else {
                 Ok(Response::with(("Did not provide a valid file to download, sorry")))
             }
