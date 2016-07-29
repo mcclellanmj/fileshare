@@ -12,7 +12,7 @@ mod filetools;
 use iron::{Iron, Request, Response, IronResult};
 use iron::modifiers::{Header};
 use iron::status;
-use iron::headers::ContentType;
+use iron::headers::{ContentType, ContentDisposition, DispositionType, DispositionParam, Charset};
 use router::Router;
 
 use std::fs;
@@ -58,12 +58,12 @@ fn main() {
     fn download(req: &mut Request) -> IronResult<Response> {
         let query = req.url.clone().query;
 
-        if let Some(q) = query {
+        let filepath = query.and_then(|q| {
             let params = form_urlencoded::parse(q.as_bytes());
             let param_map = param_map(params);
 
             let filenames = param_map.get("filename");
-            let filename = filenames
+            filenames
                 .and_then(|f| f.first())
                 .and_then(|x| if x.is_empty() {None} else {
                     // FIXME: These shouldn't use unwrap and the serve_dir is an issue since it
@@ -71,20 +71,30 @@ fn main() {
                     let download_file = Path::new(x).canonicalize().unwrap();
                     let serve_dir = Path::new(".").canonicalize().unwrap();
 
-                    if download_file.starts_with(serve_dir) {
+                    if download_file.starts_with(serve_dir) && !download_file.is_dir() {
                         Some(download_file)
                     } else {
                         None
                     }
-                });
+                })
+        });
 
-            if let Some(x) = filename {
-                Ok(Response::with((status::Ok, x)))
-            } else {
-                Ok(Response::with(("Did not provide a valid file to download, sorry")))
-            }
+        if let Some(f) = filepath {
+            let headers = Header(
+                ContentDisposition {
+                    disposition: DispositionType::Attachment,
+                    parameters: vec![DispositionParam::Filename(
+                        Charset::Us_Ascii,
+                        None,
+                        f.file_name().unwrap().to_str().unwrap().as_bytes().to_vec()
+                    )]
+                }
+            );
+            let resp = Response::with((status::Ok, f, headers));
+
+            Ok(resp)
         } else {
-            Ok(Response::with(("Did not provide a valid file to download, sorry")))
+            Ok(Response::with((status::Ok, "Not a valid file")))
         }
     }
 
