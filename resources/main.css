@@ -2,21 +2,42 @@
     --main-fg-color: #000;
     --main-bg-color: #FFF;
 }
+
 html {
     background-color: var(--main-bg-color);
     color: var(--main-fg-color);
 }
 
 .file-list {
+    display: flex;
+    flex-direction: column;
     list-style-type: none;
 }
 
-.file-list-img {
-    background-color: #888;
+.file-entry {
+    padding-bottom: 7px;
+    display: flex;
+    align-items: center;
+}
+
+.entry-icon {
+    margin-right: 5px;
+}
+
+.icon-folder {
+    background-image: url("img/icons-64.png");
     display: inline-block;
-    width: 15px;
-    height: 15px;
-    margin: 0px 5px 0px 0px;
+    width: 64px;
+    height: 64px;
+    background-position: 0px 0px;
+}
+
+.icon-file {
+    background-image: url("img/icons-64.png");
+    display: inline-block;
+    width: 64px;
+    height: 64px;
+    background-position: 64px 0px;
 }
 
 a {
