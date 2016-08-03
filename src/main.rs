@@ -8,7 +8,7 @@ mod rendering;
 mod filetools;
 
 use iron::{Iron, Request, Response, IronResult};
-use iron::modifiers::{Header};
+use iron::modifiers::{Header, RedirectRaw};
 use iron::status;
 use iron::headers::{ContentType, ContentDisposition, DispositionType, DispositionParam, Charset};
 use router::Router;
@@ -46,7 +46,8 @@ fn param_map(params: form_urlencoded::Parse) -> HashMap<String, Vec<String>> {
 
 fn main() {
     let mut router = Router::new();
-    router.get("/", root_dir);
+    router.get("/", direct_to_index);
+    router.get("/index.html", index);
     router.get("/download", download);
     router.get("/img/icons-64.png", icons64);
     router.get("/img/icons-128.png", icons128);
@@ -61,7 +62,11 @@ fn main() {
         Ok(Response::with((status::Ok, ICONS_128, headers)))
     }
 
-    fn root_dir(_: &mut Request) -> IronResult<Response> {
+    fn direct_to_index(_: &mut Request) -> IronResult<Response> {
+        Ok(Response::with((status::Found, RedirectRaw(String::from("index.html")))))
+    }
+
+    fn index(_: &mut Request) -> IronResult<Response> {
         let headers = Header(ContentType::html());
         let rendered_page = rendering::files::render("Files", get_file_list(Path::new(".")).map(|x| x.unwrap()));
 
