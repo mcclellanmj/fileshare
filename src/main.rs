@@ -1,5 +1,3 @@
-//FIXME: Check the router framework for updates to use Iron 0.4.0
-
 #[macro_use]
 extern crate horrorshow;
 extern crate iron;
@@ -21,6 +19,9 @@ use std::collections::HashMap;
 use std::borrow::Borrow;
 
 use url::form_urlencoded;
+
+static ICONS_128: &'static [u8] = include_bytes!("../resources/icons-128.png");
+static ICONS_64: &'static [u8] = include_bytes!("../resources/icons-64.png");
 
 fn get_file_list(path: &Path) -> fs::ReadDir {
     fs::read_dir(path).unwrap()
@@ -47,6 +48,18 @@ fn main() {
     let mut router = Router::new();
     router.get("/", root_dir);
     router.get("/download", download);
+    router.get("/img/icons-64.png", icons64);
+    router.get("/img/icons-128.png", icons128);
+
+    fn icons64(_: &mut Request) -> IronResult<Response> {
+        let headers = Header(ContentType::png());
+        Ok(Response::with((status::Ok, ICONS_64, headers)))
+    }
+
+    fn icons128(_: &mut Request) -> IronResult<Response> {
+        let headers = Header(ContentType::png());
+        Ok(Response::with((status::Ok, ICONS_128, headers)))
+    }
 
     fn root_dir(_: &mut Request) -> IronResult<Response> {
         let headers = Header(ContentType::html());
