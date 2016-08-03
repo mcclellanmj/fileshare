@@ -56,7 +56,7 @@ fn main() {
     }
 
     fn download(req: &mut Request) -> IronResult<Response> {
-        let query = req.url.clone().query;
+        let query = req.url.query();
 
         let filepath = query.and_then(|q| {
             let params = form_urlencoded::parse(q.as_bytes());
