@@ -3,18 +3,24 @@ extern crate horrorshow;
 extern crate iron;
 extern crate router;
 extern crate url;
+extern crate persistent;
 
 mod rendering;
 mod filetools;
 
+use iron::typemap::Key;
+use iron::middleware::Chain;
 use iron::{Iron, Request, Response, IronResult};
 use iron::modifiers::{Header, RedirectRaw};
 use iron::status;
 use iron::headers::{ContentType, ContentDisposition, DispositionType, DispositionParam, Charset};
 use router::Router;
+use iron::Plugin;
+
+use persistent::Read;
 
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::collections::HashMap;
 use std::borrow::Borrow;
 
@@ -22,6 +28,15 @@ use url::form_urlencoded;
 
 static ICONS_128: &'static [u8] = include_bytes!("../resources/icons-128.png");
 static ICONS_64: &'static [u8] = include_bytes!("../resources/icons-64.png");
+
+#[derive(Clone, Copy)]
+pub struct AppConfigKey;
+
+pub struct AppConfig {
+    root_folder: PathBuf,
+}
+
+impl Key for AppConfigKey { type Value = AppConfig; }
 
 fn get_file_list(path: &Path) -> fs::ReadDir {
     fs::read_dir(path).unwrap()
@@ -74,6 +89,7 @@ fn main() {
     }
 
     fn download(req: &mut Request) -> IronResult<Response> {
+        let serve_dir = req.get_ref::<Read<AppConfigKey>>().unwrap().root_folder.clone();
         let query = req.url.query();
 
         let filepath = query.and_then(|q| {
@@ -84,10 +100,7 @@ fn main() {
             filenames
                 .and_then(|f| f.first())
                 .and_then(|x| if x.is_empty() {None} else {
-                    // FIXME: These shouldn't use unwrap and the serve_dir is an issue since it
-                    // shouldn't need to happen everytime
                     let download_file = Path::new(x).canonicalize().unwrap();
-                    let serve_dir = Path::new(".").canonicalize().unwrap();
 
                     if download_file.starts_with(serve_dir) && !download_file.is_dir() {
                         Some(download_file)
@@ -115,6 +128,12 @@ fn main() {
             Ok(Response::with((status::Ok, "Not a valid file")))
         }
     }
+    let app_config = AppConfig {
+        root_folder : Path::new(".").canonicalize().unwrap()
+    };
 
-    Iron::new(router).http("localhost:3000").unwrap();
+    let mut request_chain = Chain::new(router);
+    request_chain.link_before(Read::<AppConfigKey>::one(app_config));
+
+    Iron::new(request_chain).http("localhost:3000").unwrap();
 }

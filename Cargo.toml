@@ -5,6 +5,7 @@ authors = ["Matt McClellan <mcclellan.mj@gmail.com>"]
 
 [dependencies]
 iron = "0.4.*"
-horrorshow = "0.5.6"
+persistent = "0.2.*"
 router = "0.2.*"
 url = "1.1.*"
+horrorshow = "0.5.*"
