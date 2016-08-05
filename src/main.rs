@@ -7,13 +7,14 @@ extern crate persistent;
 
 mod rendering;
 mod filetools;
+mod http;
 
 use iron::typemap::Key;
 use iron::middleware::Chain;
 use iron::{Iron, Request, Response, IronResult};
 use iron::modifiers::{Header, RedirectRaw};
 use iron::status;
-use iron::headers::{ContentType, ContentDisposition, DispositionType, DispositionParam, Charset};
+use iron::headers::ContentType;
 use router::Router;
 use iron::Plugin;
 
@@ -111,18 +112,8 @@ fn main() {
         });
 
         if let Some(f) = filepath {
-            let headers = Header(
-                ContentDisposition {
-                    disposition: DispositionType::Attachment,
-                    parameters: vec![DispositionParam::Filename(
-                        Charset::Us_Ascii,
-                        None,
-                        f.file_name().unwrap().to_str().unwrap().as_bytes().to_vec()
-                    )]
-                }
-            );
-            let resp = Response::with((status::Ok, f, headers));
-
+            let download_header = Header(http::headers::download_file_header(f.file_name().unwrap().to_str().unwrap()));
+            let resp = Response::with((status::Ok, f, download_header));
             Ok(resp)
         } else {
             Ok(Response::with((status::Ok, "Not a valid file")))
