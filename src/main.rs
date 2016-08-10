@@ -29,6 +29,7 @@ use url::form_urlencoded;
 
 static ICONS_128: &'static [u8] = include_bytes!("../resources/icons-128.png");
 static ICONS_64: &'static [u8] = include_bytes!("../resources/icons-64.png");
+static ICONS_32: &'static [u8] = include_bytes!("../resources/icons-32.png");
 
 #[derive(Clone, Copy)]
 pub struct AppConfigKey;
@@ -62,11 +63,18 @@ fn param_map(params: form_urlencoded::Parse) -> HashMap<String, Vec<String>> {
 
 fn main() {
     let mut router = Router::new();
+
     router.get("/", direct_to_index);
     router.get("/index.html", index);
     router.get("/download", download);
+    router.get("/img/icons-32.png", icons32);
     router.get("/img/icons-64.png", icons64);
     router.get("/img/icons-128.png", icons128);
+
+    fn icons32(_: &mut Request) -> IronResult<Response> {
+        let headers = Header(ContentType::png());
+        Ok(Response::with((status::Ok, ICONS_32, headers)))
+    }
 
     fn icons64(_: &mut Request) -> IronResult<Response> {
         let headers = Header(ContentType::png());

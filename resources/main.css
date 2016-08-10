@@ -1,6 +1,7 @@
 :root {
     --main-fg-color: #000;
     --main-bg-color: #FFF;
+    --icon-size: 32px;
 }
 
 html {
@@ -21,23 +22,23 @@ html {
 }
 
 .entry-icon {
-    margin-right: 5px;
+    margin-right: 17px;
 }
 
 .icon-folder {
-    background-image: url("img/icons-64.png");
+    background-image: url("img/icons-32.png");
     display: inline-block;
-    width: 64px;
-    height: 64px;
+    width: 32px;
+    height: 32px;
     background-position: 0px 0px;
 }
 
 .icon-file {
-    background-image: url("img/icons-64.png");
+    background-image: url("img/icons-32.png");
     display: inline-block;
-    width: 64px;
-    height: 64px;
-    background-position: 64px 0px;
+    width: 32px;
+    height: 32px;
+    background-position: 32px 0px;
 }
 
 a {
