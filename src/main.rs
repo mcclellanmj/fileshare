@@ -17,6 +17,7 @@ use iron::status;
 use iron::headers::ContentType;
 use router::Router;
 use iron::Plugin;
+use http::handlers::StaticByteHandler;
 
 use persistent::Read;
 
@@ -61,30 +62,20 @@ fn param_map(params: form_urlencoded::Parse) -> HashMap<String, Vec<String>> {
     return map;
 }
 
+fn share(_: &mut Request) -> IronResult<Response> {
+    Ok(Response::with((status::Ok, "Not a valid file")))
+}
+
 fn main() {
     let mut router = Router::new();
 
     router.get("/", direct_to_index);
     router.get("/index.html", index);
     router.get("/download", download);
-    router.get("/img/icons-32.png", icons32);
-    router.get("/img/icons-64.png", icons64);
-    router.get("/img/icons-128.png", icons128);
-
-    fn icons32(_: &mut Request) -> IronResult<Response> {
-        let headers = Header(ContentType::png());
-        Ok(Response::with((status::Ok, ICONS_32, headers)))
-    }
-
-    fn icons64(_: &mut Request) -> IronResult<Response> {
-        let headers = Header(ContentType::png());
-        Ok(Response::with((status::Ok, ICONS_64, headers)))
-    }
-
-    fn icons128(_: &mut Request) -> IronResult<Response> {
-        let headers = Header(ContentType::png());
-        Ok(Response::with((status::Ok, ICONS_128, headers)))
-    }
+    router.get("/share", share);
+    router.get("/img/icons-32.png", StaticByteHandler::new(ICONS_32));
+    router.get("/img/icons-64.png", StaticByteHandler::new(ICONS_64));
+    router.get("/img/icons-128.png", StaticByteHandler::new(ICONS_128));
 
     fn direct_to_index(_: &mut Request) -> IronResult<Response> {
         Ok(Response::with((status::Found, RedirectRaw(String::from("index.html")))))
