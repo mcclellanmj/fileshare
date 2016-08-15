@@ -12,12 +12,14 @@ mod http;
 use iron::typemap::Key;
 use iron::middleware::Chain;
 use iron::{Iron, Request, Response, IronResult};
-use iron::modifiers::{Header, RedirectRaw};
+use iron::modifiers::Header;
 use iron::status;
 use iron::headers::ContentType;
 use router::Router;
 use iron::Plugin;
-use http::handlers::StaticByteHandler;
+use http::handlers::{StaticByteHandler, RedirectHandler};
+
+use rendering::{files,share};
 
 use persistent::Read;
 
@@ -62,14 +64,48 @@ fn param_map(params: form_urlencoded::Parse) -> HashMap<String, Vec<String>> {
     return map;
 }
 
-fn share(_: &mut Request) -> IronResult<Response> {
-    Ok(Response::with((status::Ok, "Not a valid file")))
+fn within_root(root: &PathBuf, target: &PathBuf) -> bool {
+    let target_file = target.canonicalize().unwrap();
+
+    target_file.starts_with(root)
+}
+
+fn share(req: &mut Request) -> IronResult<Response> {
+    let serve_dir = req.get_ref::<Read<AppConfigKey>>().unwrap().root_folder.clone();
+    let query = req.url.query();
+
+    let filepath = query.and_then(|q| {
+        let params = form_urlencoded::parse(q.as_bytes());
+        let param_map = param_map(params);
+
+        let filenames = param_map.get("filename");
+        filenames
+            .and_then(|f| f.first())
+            .and_then(|x| if x.is_empty() {None} else {
+                let full_path = Path::new(x);
+
+                if full_path.exists() && within_root(&serve_dir, &full_path.to_path_buf()) {
+                    Some(full_path.canonicalize().unwrap())
+                } else {
+                    None
+                }
+            })
+    });
+
+    if let Some(f) = filepath {
+        let headers = Header(ContentType::html());
+        let rendered_page = share::render(f.as_path());
+
+        Ok(Response::with((status::Ok, rendered_page, headers)))
+    } else {
+        Ok(Response::with((status::Ok, "No valid file found in the filename param")))
+    }
 }
 
 fn main() {
     let mut router = Router::new();
 
-    router.get("/", direct_to_index);
+    router.get("/", RedirectHandler::new("index.html"));
     router.get("/index.html", index);
     router.get("/download", download);
     router.get("/share", share);
@@ -77,13 +113,9 @@ fn main() {
     router.get("/img/icons-64.png", StaticByteHandler::new(ICONS_64));
     router.get("/img/icons-128.png", StaticByteHandler::new(ICONS_128));
 
-    fn direct_to_index(_: &mut Request) -> IronResult<Response> {
-        Ok(Response::with((status::Found, RedirectRaw(String::from("index.html")))))
-    }
-
     fn index(_: &mut Request) -> IronResult<Response> {
         let headers = Header(ContentType::html());
-        let rendered_page = rendering::files::render("Files", get_file_list(Path::new(".")).map(|x| x.unwrap()));
+        let rendered_page = files::render("Files", get_file_list(Path::new(".")).map(|x| x.unwrap()));
 
         Ok(Response::with((status::Ok, rendered_page, headers)))
     }

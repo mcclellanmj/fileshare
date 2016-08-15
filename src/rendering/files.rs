@@ -4,15 +4,19 @@ use filetools::dir;
 
 const MAIN_CSS: &'static str = include_str!("../../resources/main.css");
 
-fn render_file(entry: &DirEntry) -> Box<RenderBox> {
+fn render_file (entry: &DirEntry) -> Box<RenderBox> {
     let file_name = entry.file_name();
     let file_type = entry.file_type().unwrap();
+    let full_path = String::from(entry.path().into_os_string().to_str().unwrap());
 
     let offset = if file_type.is_dir() {"icon-folder"} else {"icon-file"};
     box_html! {
-        a(class="file-entry", href="#") {
-            span(class=format!("entry-icon {}", offset)) : raw!("");
-            span : file_name.to_str().unwrap()
+        div(class="file-entry") {
+            a(class="file-link", href="#") {
+                span(class=format!("entry-icon {}", offset)) : raw!("");
+                span : file_name.to_str().unwrap();
+            }
+            a(href=format!("/share?filename={}", full_path)) : raw!("Share");
         }
     }
 }
