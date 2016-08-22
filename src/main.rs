@@ -5,6 +5,7 @@ extern crate router;
 extern crate url;
 extern crate persistent;
 extern crate rusqlite;
+extern crate uuid;
 
 mod rendering;
 mod filetools;
@@ -32,6 +33,8 @@ use url::form_urlencoded;
 use rusqlite::Connection;
 use std::sync::Mutex;
 use std::sync::Arc;
+
+use uuid::Uuid;
 
 static ICONS_128: &'static [u8] = include_bytes!("../resources/icons-128.png");
 static ICONS_64: &'static [u8] = include_bytes!("../resources/icons-64.png");
@@ -90,7 +93,6 @@ fn share(req: &mut Request) -> IronResult<Response> {
                 let full_path = Path::new(x);
 
                 if full_path.exists() && within_root(&serve_dir, &full_path.to_path_buf()) {
-
                     Some(full_path.canonicalize().unwrap())
                 } else {
                     None
@@ -100,8 +102,9 @@ fn share(req: &mut Request) -> IronResult<Response> {
 
     if let Some(f) = filepath {
         let connection = sqlite.lock().unwrap();
+        let uuid = Uuid::new_v4().simple().to_string();
         // TODO: Use uuid and path
-        let stmt = connection.execute("INSERT INTO shared_files VALUES (:hash, :path)", &["", ""]).unwrap();
+        let result = connection.execute_named("INSERT INTO shared_files(hash, path) VALUES (:hash, :path)", &[(":hash", &uuid), (":path", &"")]).unwrap();
 
         let headers = Header(ContentType::html());
         let rendered_page = share::render(f.as_path());
@@ -169,9 +172,11 @@ fn main() {
 
         if !table_exists {
             connection.execute("CREATE TABLE shared_files(
-                ID INT PRIMARY KEY NOT NULL,
-                HASH CHAR(50),
-                PATH CHAR(256))", &[]).unwrap();
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                hash CHAR(36) UNIQUE,
+                path VARCHAR(32768))", &[]).unwrap();
+
+            connection.execute("CREATE UNIQUE INDEX shared_files_hash_index on shared_files (hash)", &[]).unwrap();
         }
     }
 
