@@ -90,8 +90,6 @@ fn share(req: &mut Request) -> IronResult<Response> {
                 let full_path = Path::new(x);
 
                 if full_path.exists() && within_root(&serve_dir, &full_path.to_path_buf()) {
-                    let connection = sqlite.lock().unwrap();
-                    connection.execute("SELECT * FROM files", &[]).unwrap();
 
                     Some(full_path.canonicalize().unwrap())
                 } else {
@@ -101,6 +99,10 @@ fn share(req: &mut Request) -> IronResult<Response> {
     });
 
     if let Some(f) = filepath {
+        let connection = sqlite.lock().unwrap();
+        // TODO: Use uuid and path
+        let stmt = connection.execute("INSERT INTO shared_files VALUES (:hash, :path)", &["", ""]).unwrap();
+
         let headers = Header(ContentType::html());
         let rendered_page = share::render(f.as_path());
 

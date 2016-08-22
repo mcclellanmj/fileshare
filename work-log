@@ -1,0 +1,3 @@
+- Need to create a uuid for the shared file, probably use the uuid crate
+- Need to move the database stuff out to another module to prevent main from getting too big
+- Make convenience function for changing path to string
