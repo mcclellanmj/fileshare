@@ -4,6 +4,7 @@ extern crate iron;
 extern crate router;
 extern crate url;
 extern crate persistent;
+extern crate rusqlite;
 
 mod rendering;
 mod filetools;
@@ -20,7 +21,6 @@ use iron::Plugin;
 use http::handlers::{StaticByteHandler, RedirectHandler};
 
 use rendering::{files,share};
-
 use persistent::Read;
 
 use std::fs;
@@ -29,19 +29,23 @@ use std::collections::HashMap;
 use std::borrow::Borrow;
 
 use url::form_urlencoded;
+use rusqlite::Connection;
+use std::sync::Mutex;
+use std::sync::Arc;
 
 static ICONS_128: &'static [u8] = include_bytes!("../resources/icons-128.png");
 static ICONS_64: &'static [u8] = include_bytes!("../resources/icons-64.png");
 static ICONS_32: &'static [u8] = include_bytes!("../resources/icons-32.png");
 
 #[derive(Clone, Copy)]
-pub struct AppConfigKey;
+pub struct AppStateKey;
 
-pub struct AppConfig {
+pub struct AppState {
     root_folder: PathBuf,
+    sqlite: Arc<Mutex<Connection>>
 }
 
-impl Key for AppConfigKey { type Value = AppConfig; }
+impl Key for AppStateKey { type Value = AppState; }
 
 fn get_file_list(path: &Path) -> fs::ReadDir {
     fs::read_dir(path).unwrap()
@@ -71,7 +75,8 @@ fn within_root(root: &PathBuf, target: &PathBuf) -> bool {
 }
 
 fn share(req: &mut Request) -> IronResult<Response> {
-    let serve_dir = req.get_ref::<Read<AppConfigKey>>().unwrap().root_folder.clone();
+    let serve_dir = req.get_ref::<Read<AppStateKey>>().unwrap().root_folder.clone();
+    let sqlite = req.get_ref::<Read<AppStateKey>>().unwrap().sqlite.clone();
     let query = req.url.query();
 
     let filepath = query.and_then(|q| {
@@ -85,6 +90,9 @@ fn share(req: &mut Request) -> IronResult<Response> {
                 let full_path = Path::new(x);
 
                 if full_path.exists() && within_root(&serve_dir, &full_path.to_path_buf()) {
+                    let connection = sqlite.lock().unwrap();
+                    connection.execute("SELECT * FROM files", &[]).unwrap();
+
                     Some(full_path.canonicalize().unwrap())
                 } else {
                     None
@@ -121,7 +129,7 @@ fn main() {
     }
 
     fn download(req: &mut Request) -> IronResult<Response> {
-        let serve_dir = req.get_ref::<Read<AppConfigKey>>().unwrap().root_folder.clone();
+        let serve_dir = req.get_ref::<Read<AppStateKey>>().unwrap().root_folder.clone();
         let query = req.url.query();
 
         let filepath = query.and_then(|q| {
@@ -150,12 +158,28 @@ fn main() {
             Ok(Response::with((status::Ok, "Not a valid file")))
         }
     }
-    let app_config = AppConfig {
-        root_folder : Path::new(".").canonicalize().unwrap()
+
+    // FIXME: Shouldn't just unwrap
+    let connection = Connection::open("data.sql").unwrap();
+    {
+        let mut stmt = connection.prepare("SELECT name FROM sqlite_master WHERE type='table' and name='shared_files'").unwrap();
+        let table_exists = stmt.exists(&[]).unwrap();
+
+        if !table_exists {
+            connection.execute("CREATE TABLE shared_files(
+                ID INT PRIMARY KEY NOT NULL,
+                HASH CHAR(50),
+                PATH CHAR(256))", &[]).unwrap();
+        }
+    }
+
+    let app_config = AppState {
+        root_folder : Path::new(".").canonicalize().unwrap(),
+        sqlite : Arc::new(Mutex::new(connection))
     };
 
     let mut request_chain = Chain::new(router);
-    request_chain.link_before(Read::<AppConfigKey>::one(app_config));
+    request_chain.link_before(Read::<AppStateKey>::one(app_config));
 
     Iron::new(request_chain).http("localhost:3000").unwrap();
 }
