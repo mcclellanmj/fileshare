@@ -1,3 +1,4 @@
-- Need to create a uuid for the shared file, probably use the uuid crate
+x Need to create a uuid for the shared file, probably use the uuid crate
 - Need to move the database stuff out to another module to prevent main from getting too big
-- Make convenience function for changing path to string
+x Make convenience function for changing path to string
+- Make function that either redirects to download of file or of folder when given a uuid

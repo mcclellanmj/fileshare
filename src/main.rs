@@ -21,6 +21,7 @@ use router::Router;
 use iron::Plugin;
 use http::handlers::{StaticByteHandler, RedirectHandler};
 
+use filetools::dir;
 use rendering::{files,share};
 use persistent::Read;
 
@@ -40,14 +41,13 @@ static ICONS_128: &'static [u8] = include_bytes!("../resources/icons-128.png");
 static ICONS_64: &'static [u8] = include_bytes!("../resources/icons-64.png");
 static ICONS_32: &'static [u8] = include_bytes!("../resources/icons-32.png");
 
-#[derive(Clone, Copy)]
-pub struct AppStateKey;
-
 pub struct AppState {
     root_folder: PathBuf,
     sqlite: Arc<Mutex<Connection>>
 }
 
+#[derive(Clone, Copy)]
+pub struct AppStateKey;
 impl Key for AppStateKey { type Value = AppState; }
 
 fn get_file_list(path: &Path) -> fs::ReadDir {
@@ -71,12 +71,6 @@ fn param_map(params: form_urlencoded::Parse) -> HashMap<String, Vec<String>> {
     return map;
 }
 
-fn within_root(root: &PathBuf, target: &PathBuf) -> bool {
-    let target_file = target.canonicalize().unwrap();
-
-    target_file.starts_with(root)
-}
-
 fn share(req: &mut Request) -> IronResult<Response> {
     let serve_dir = req.get_ref::<Read<AppStateKey>>().unwrap().root_folder.clone();
     let sqlite = req.get_ref::<Read<AppStateKey>>().unwrap().sqlite.clone();
@@ -92,7 +86,7 @@ fn share(req: &mut Request) -> IronResult<Response> {
             .and_then(|x| if x.is_empty() {None} else {
                 let full_path = Path::new(x);
 
-                if full_path.exists() && within_root(&serve_dir, &full_path.to_path_buf()) {
+                if full_path.exists() && dir::is_child_of(&serve_dir, &full_path.to_path_buf()) {
                     Some(full_path.canonicalize().unwrap())
                 } else {
                     None
@@ -101,10 +95,14 @@ fn share(req: &mut Request) -> IronResult<Response> {
     });
 
     if let Some(f) = filepath {
-        let connection = sqlite.lock().unwrap();
-        let uuid = Uuid::new_v4().simple().to_string();
-        // TODO: Use uuid and path
-        let result = connection.execute_named("INSERT INTO shared_files(hash, path) VALUES (:hash, :path)", &[(":hash", &uuid), (":path", &"")]).unwrap();
+        {
+            let uuid = Uuid::new_v4().simple().to_string();
+            let filepath = filetools::files::make_string(&f);
+
+            let connection = sqlite.lock().unwrap();
+            let num_rows_added = connection.execute_named("INSERT INTO shared_files(hash, path) VALUES (:hash, :path)", &[(":hash", &uuid), (":path", &filepath)]).unwrap();
+            println!("Shared file [{}] with uuid [{}] and added [{}] rows to database", filepath, uuid, num_rows_added);
+        }
 
         let headers = Header(ContentType::html());
         let rendered_page = share::render(f.as_path());
@@ -180,13 +178,13 @@ fn main() {
         }
     }
 
-    let app_config = AppState {
+    let app_state = AppState {
         root_folder : Path::new(".").canonicalize().unwrap(),
         sqlite : Arc::new(Mutex::new(connection))
     };
 
     let mut request_chain = Chain::new(router);
-    request_chain.link_before(Read::<AppStateKey>::one(app_config));
+    request_chain.link_before(Read::<AppStateKey>::one(app_state));
 
     Iron::new(request_chain).http("localhost:3000").unwrap();
 }
