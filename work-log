@@ -1,4 +1,6 @@
-x Need to create a uuid for the shared file, probably use the uuid crate
 - Need to move the database stuff out to another module to prevent main from getting too big
-x Make convenience function for changing path to string
 - Make function that either redirects to download of file or of folder when given a uuid
+- Merge the rendering folders and the handler folders together, that way the handler and what it renders is all together
+- Find a better way to do mod.rs for handlers, not nice that I cannot search for the handler file name.
+- Cleanup filetools, probably don't need these splitup into different files
+- Param map probably needs its own module
