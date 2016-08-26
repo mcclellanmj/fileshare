@@ -8,5 +8,5 @@ iron = "0.4.*"
 router = "0.2.*"
 url = "1.1.*"
 horrorshow = "0.5.*"
-rusqlite = "0.7.3"
+rusqlite = "0.7.*"
 uuid = { version = "0.3.*", features = ["v4"] }

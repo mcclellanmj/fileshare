@@ -10,8 +10,8 @@ use std::path::{Path, PathBuf};
 use http::headers::download_file_header;
 use http::map_params;
 
-use rusqlite::Connection;
-use std::sync::{Mutex, Arc};
+use database::ShareDatabase;
+use std::sync::Arc;
 use filetools;
 use filetools::dir;
 use iron::status;
@@ -54,11 +54,11 @@ impl Handler for RedirectHandler {
 
 pub struct ShareHandler {
     root_folder: Arc<PathBuf>,
-    connection: Arc<Mutex<Connection>>
+    connection: Arc<ShareDatabase>
 }
 
 impl ShareHandler {
-    pub fn new(connection: Arc<Mutex<Connection>>, path: Arc<PathBuf>) -> ShareHandler {
+    pub fn new(connection: Arc<ShareDatabase>, path: Arc<PathBuf>) -> ShareHandler {
         ShareHandler {
             connection: connection,
             root_folder: path
@@ -69,7 +69,6 @@ impl ShareHandler {
 impl Handler for ShareHandler {
     fn handle(&self, req: &mut Request) -> IronResult<Response> {
         let serve_dir = self.root_folder.clone();
-        let sqlite = self.connection.clone();
         let query = req.url.query();
 
         let filepath = query.and_then(|q| {
@@ -95,8 +94,7 @@ impl Handler for ShareHandler {
                 let uuid = Uuid::new_v4().simple().to_string();
                 let filepath = filetools::files::make_string(&f);
 
-                let connection = sqlite.lock().unwrap();
-                let num_rows_added = connection.execute_named("INSERT INTO shared_files(hash, path) VALUES (:hash, :path)", &[(":hash", &uuid), (":path", &filepath)]).unwrap();
+                let num_rows_added = self.connection.add_shared_file(&uuid, &String::from(filepath));
                 println!("Shared file [{}] with uuid [{}] and added [{}] rows to database", filepath, uuid, num_rows_added);
             }
 
