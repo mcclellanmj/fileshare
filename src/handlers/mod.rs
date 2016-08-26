@@ -1,42 +1,23 @@
-extern crate core;
-
 use iron::middleware::Handler;
 use iron::{Request, Response, IronResult};
 use iron::headers::ContentType;
 use iron::modifiers::{RedirectRaw, Header};
-use rusqlite::Connection;
 use url::form_urlencoded;
 use uuid::Uuid;
 use rendering::share;
 use std::path::{Path, PathBuf};
-use std::collections::HashMap;
 
-use http;
+use http::headers::download_file_header;
+use http::map_params;
 
+use rusqlite::Connection;
 use std::sync::{Mutex, Arc};
 use filetools;
 use filetools::dir;
-
-use handlers::core::borrow::Borrow;
-
 use iron::status;
 
-fn param_map(params: form_urlencoded::Parse) -> HashMap<String, Vec<String>> {
-    let mut map : HashMap<String, Vec<String>> = HashMap::new();
-
-    for (key, value) in params {
-        let borrowed_key: &str = key.borrow();
-        if !map.contains_key(borrowed_key) {
-            map.insert(borrowed_key.to_string(), Vec::new());
-        } else {
-            // Do nothing
-        }
-
-        map.get_mut(borrowed_key).unwrap().push(value.to_string());
-    }
-
-    return map;
-}
+mod access_shared;
+pub use self::access_shared::AccessSharedHandler;
 
 pub struct StaticByteHandler {
    bytes: &'static [u8]
@@ -71,20 +52,6 @@ impl Handler for RedirectHandler {
     }
 }
 
-pub struct SharedHandler {}
-
-impl SharedHandler {
-    pub fn new() -> SharedHandler {
-        SharedHandler {}
-    }
-}
-
-impl Handler for SharedHandler {
-    fn handle(&self, _: &mut Request) -> IronResult<Response> {
-        Ok(Response::with((status::Ok, "Hello Shared Thing")))
-    }
-}
-
 pub struct ShareHandler {
     root_folder: Arc<PathBuf>,
     connection: Arc<Mutex<Connection>>
@@ -107,7 +74,7 @@ impl Handler for ShareHandler {
 
         let filepath = query.and_then(|q| {
             let params = form_urlencoded::parse(q.as_bytes());
-            let param_map = param_map(params);
+            let param_map = map_params(params);
 
             let filenames = param_map.get("filename");
             filenames
@@ -162,7 +129,7 @@ impl Handler for DownloadHandler {
 
         let filepath = query.and_then(|q| {
             let params = form_urlencoded::parse(q.as_bytes());
-            let param_map = param_map(params);
+            let param_map = map_params(params);
 
             let filenames = param_map.get("filename");
             filenames
@@ -179,7 +146,7 @@ impl Handler for DownloadHandler {
         });
 
         if let Some(f) = filepath {
-            let download_header = Header(http::headers::download_file_header(f.file_name().unwrap().to_str().unwrap()));
+            let download_header = Header(download_file_header(f.file_name().unwrap().to_str().unwrap()));
             let resp = Response::with((status::Ok, f, download_header));
             Ok(resp)
         } else {

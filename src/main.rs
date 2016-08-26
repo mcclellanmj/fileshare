@@ -17,8 +17,7 @@ use iron::modifiers::Header;
 use iron::status;
 use iron::headers::ContentType;
 use router::Router;
-use iron::Plugin;
-use handlers::{StaticByteHandler, RedirectHandler, SharedHandler, ShareHandler, DownloadHandler};
+use handlers::{StaticByteHandler, RedirectHandler, AccessSharedHandler, ShareHandler, DownloadHandler};
 
 use rendering::files;
 
@@ -57,9 +56,9 @@ fn main() {
     let root_folder = Arc::new(Path::new(".").canonicalize().unwrap());
     let sqlite = Arc::new(Mutex::new(connection));
 
-    router.get("/", RedirectHandler::new("index.html"));
     router.get("/index.html", index);
-    router.get("/shared", SharedHandler::new());
+    router.get("/", RedirectHandler::new("index.html"));
+    router.get("/shared", AccessSharedHandler::new(sqlite.clone()));
     router.get("/download", DownloadHandler::new(root_folder.clone()));
     router.get("/share", ShareHandler::new(sqlite.clone(), root_folder.clone()));
     router.get("/img/icons-32.png", StaticByteHandler::new(ICONS_32));
