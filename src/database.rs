@@ -1,6 +1,5 @@
 use rusqlite::Connection;
 use rusqlite::types::ToSql;
-use std::path::{Path, PathBuf};
 
 use std::sync::{Arc, Mutex};
 
@@ -30,7 +29,7 @@ impl ShareDatabase {
         }
     }
 
-    pub fn get_shared_by_hash<T: ToSql>(&self, hash: &T) -> Option<PathBuf> {
+    pub fn get_shared_by_hash<T: ToSql>(&self, hash: &T) -> Option<String> {
         let connection = self.connection.lock().unwrap();
 
         let mut stmt = connection.prepare("SELECT path FROM shared_files WHERE hash=:hash").unwrap();
@@ -38,8 +37,7 @@ impl ShareDatabase {
 
         if let Some(r) = rows.next() {
             let result = r.unwrap();
-            let path: String = result.get(0);
-            Some(Path::new(&path).to_owned())
+            result.get(0)
         } else {
             None
         }

@@ -1,7 +1,6 @@
 use horrorshow::Template;
 use std::path::Path;
-
-const MAIN_CSS: &'static str = include_str!("../../resources/main.css");
+use html;
 
 pub fn render(file: &Path) -> String {
     let title = if file.is_dir() {
@@ -13,10 +12,7 @@ pub fn render(file: &Path) -> String {
     (html! {
         : raw!("<!DOCTYPE html>");
         html {
-            head {
-                style(type="text/css") : raw!(MAIN_CSS);
-                title : title
-            }
+            : html::head(title);
             body {
                 main {
                     header { h1 : title}

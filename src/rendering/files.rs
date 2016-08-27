@@ -1,8 +1,7 @@
 use std::fs::DirEntry;
 use horrorshow::{RenderBox, Template};
 use filetools::dir;
-
-const MAIN_CSS: &'static str = include_str!("../../resources/main.css");
+use html;
 
 fn render_file (entry: &DirEntry) -> Box<RenderBox> {
     let file_name = entry.file_name();
@@ -28,10 +27,7 @@ pub fn render<I: Iterator<Item=DirEntry>>(title: &str, files: I) -> String {
     (html! {
         : raw!("<!DOCTYPE html>");
         html {
-            head {
-                style(type="text/css") : raw!(MAIN_CSS);
-                title : title
-            }
+            : html::head(String::from(title));
             body {
                 main {
                     header { h1 : title}

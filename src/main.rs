@@ -11,6 +11,7 @@ mod filetools;
 mod http;
 mod handlers;
 mod database;
+mod html;
 
 use iron::middleware::Chain;
 use iron::{Iron, Request, Response, IronResult};
