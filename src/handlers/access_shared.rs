@@ -5,15 +5,14 @@ use iron::status;
 use std::sync::Arc;
 use iron::modifiers::Header;
 
-use http::map_params;
-use url::form_urlencoded;
+use http::Params;
 
 use std::path::{Path, PathBuf};
 use database::ShareDatabase;
 
 use std::fs;
 use http::headers::download_file_header;
-use horrorshow::Template;
+use horrorshow::{Template, RenderBox};
 use std::fs::DirEntry;
 use filetools::dir;
 use iron::headers::ContentType;
@@ -32,7 +31,23 @@ impl AccessSharedHandler {
     }
 }
 
-fn render_shared_folder<I: Iterator<Item=DirEntry>>(files: I) -> String {
+fn render_file (entry: &DirEntry, hash: String) -> Box<RenderBox> {
+    let file_name = entry.file_name();
+    let file_type = entry.file_type().unwrap();
+    let full_path = String::from(entry.path().into_os_string().to_str().unwrap());
+
+    let offset = if file_type.is_dir() {"icon-folder"} else {"icon-file"};
+    box_html! {
+        div(class="file-entry") {
+            a(class="file-link", href=format!("/shared?hash={}&filepath={}", hash, full_path)) {
+                span(class=format!("entry-icon {}", offset)) : raw!("");
+                span : file_name.to_str().unwrap();
+            }
+        }
+    }
+}
+
+fn render_shared_folder<I: Iterator<Item=DirEntry>>(files: I, hash: String) -> String {
     let mut sorted_files = files.collect::<Vec<DirEntry>>();
     sorted_files.sort_by(dir::sort);
     let title = "Shared Folder";
@@ -46,6 +61,9 @@ fn render_shared_folder<I: Iterator<Item=DirEntry>>(files: I) -> String {
                     header { h1 : title}
                     section(id="files") {
                         div(class="file-list") {
+                            @ for file in sorted_files {
+                                : render_file(&file, hash.clone());
+                            }
                         }
                     }
                 }
@@ -54,11 +72,11 @@ fn render_shared_folder<I: Iterator<Item=DirEntry>>(files: I) -> String {
     }).into_string().unwrap()
 }
 
-fn show_shared_folder(f: PathBuf) -> Response {
+fn show_shared_folder(f: PathBuf, hash: String) -> Response {
     let headers = Header(ContentType::html());
 
     let file_list = fs::read_dir(f).unwrap().map(|x| x.unwrap());
-    let rendered_page = render_shared_folder(file_list);
+    let rendered_page = render_shared_folder(file_list, hash);
 
     Response::with((status::Ok, rendered_page, headers))
 }
@@ -70,24 +88,33 @@ fn download_response(f: PathBuf) -> Response {
 
 impl Handler for AccessSharedHandler {
     fn handle(&self, request: &mut Request) -> IronResult<Response> {
-        let query = request.url.query();
+        let url = request.url.clone().into_generic_url();
+        let params = Params::new(&url);
 
-        let file_path = query.and_then(|q| {
-            let params = form_urlencoded::parse(q.as_bytes());
-            let param_map = map_params(params);
-
-            let hashes = param_map.get("hash");
-            hashes
-                .and_then(|f| f.first())
-                .and_then(|x| if x.is_empty() {None} else {
-                    let database = self.database.clone();
-                    database.get_shared_by_hash(x).map(|x| Path::new(&x).to_owned())
-                })
+        let hash_param = params.get_first_param(&String::from("hash"));
+        let file_path = hash_param.and_then(|h| {
+            if !h.is_empty() {
+                let database: Arc<ShareDatabase> = self.database.clone();
+                database.get_shared_by_hash(&h).map(|y| (String::from(h.clone()), Path::new(&y).to_owned()))
+            } else {
+                None
+            }
         });
 
-        if let Some(f) = file_path {
+        if let Some((hash, f)) = file_path {
             if f.is_dir() {
-                Ok(show_shared_folder(f))
+                let folder_to_show = params
+                    .get_first_param(&String::from("filepath"))
+                    .map(|x| Path::new(&x).to_owned())
+                    .and_then(|x| {
+                        if dir::is_child_of(&f, &x) {
+                            Some(x)
+                        } else {
+                            None
+                        }
+                    })
+                    .unwrap_or(f);
+                Ok(show_shared_folder(folder_to_show, hash))
             } else {
                 Ok(download_response(f))
             }
