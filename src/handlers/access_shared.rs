@@ -103,18 +103,22 @@ impl Handler for AccessSharedHandler {
 
         if let Some((hash, f)) = file_path {
             if f.is_dir() {
-                let folder_to_show = params
-                    .get_first_param(&String::from("filepath"))
-                    .map(|x| Path::new(&x).to_owned())
-                    .and_then(|x| {
-                        if dir::is_child_of(&f, &x) {
-                            Some(x)
+                let requested_path = params.get_first_param(&String::from("filepath")).map(|x| Path::new(&x).to_owned());
+
+                if let Some(path) = requested_path {
+                    if !dir::is_child_of(&f, &path) {
+                        Ok(Response::with((status::BadRequest, "Cannot access file outside of the shared folder")))
+                    } else {
+                        if path.is_dir() {
+                            Ok(show_shared_folder(path, hash))
                         } else {
-                            None
+                            Ok(download_response(path))
                         }
-                    })
-                    .unwrap_or(f);
-                Ok(show_shared_folder(folder_to_show, hash))
+                    }
+
+                } else {
+                    Ok(show_shared_folder(f, hash))
+                }
             } else {
                 Ok(download_response(f))
             }

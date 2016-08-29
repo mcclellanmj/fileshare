@@ -1,8 +1,6 @@
-- Make function that either redirects to download of file or of folder when given a uuid
--- Fix issue where it will not download when traversing down
--- Fix issue where it automatically goes to the root of the share instead of showing an error when someone tries to manipulate
-   the filepath to something not in the share
 - Merge the rendering folders and the handler folders together, that way the handler and what it renders is all together
 - Cleanup filetools, probably don't need these splitup into different files
 - Start making some tests
 - Find out if the Params function can be made to use &str instead of String
+- Fix the unwraps, particularly in the is_child_of which can error out given any invalid path
+- Figure out the design
