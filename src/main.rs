@@ -5,6 +5,7 @@ extern crate router;
 extern crate url;
 extern crate rusqlite;
 extern crate uuid;
+extern crate rustc_serialize;
 
 mod rendering;
 mod filetools;
@@ -19,7 +20,7 @@ use iron::modifiers::Header;
 use iron::status;
 use iron::headers::ContentType;
 use router::Router;
-use handlers::{StaticByteHandler, RedirectHandler, AccessSharedHandler, ShareHandler, DownloadHandler};
+use handlers::{StaticByteHandler, RedirectHandler, AccessSharedHandler, ShareHandler, DownloadHandler, FilelistHandler};
 
 use rendering::files;
 
@@ -43,6 +44,7 @@ fn main() {
 
     router.get("/index.html", index);
     router.get("/", RedirectHandler::new("index.html"));
+    router.get("/view", FilelistHandler::new(root_folder.clone()));
     router.get("/shared", AccessSharedHandler::new(database.clone()));
     router.get("/download", DownloadHandler::new(root_folder.clone()));
     router.get("/share", ShareHandler::new(database.clone(), root_folder.clone()));

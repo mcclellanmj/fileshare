@@ -17,7 +17,9 @@ use filetools::dir;
 use iron::status;
 
 mod access_shared;
+mod filelist;
 pub use self::access_shared::AccessSharedHandler;
+pub use self::filelist::FilelistHandler;
 
 pub struct StaticByteHandler {
    bytes: &'static [u8]

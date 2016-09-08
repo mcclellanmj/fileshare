@@ -8,7 +8,10 @@ fn render_file (entry: &DirEntry) -> Box<RenderBox> {
     let file_type = entry.file_type().unwrap();
     let full_path = String::from(entry.path().into_os_string().to_str().unwrap());
 
-    let offset = if file_type.is_dir() {"icon-folder"} else {"icon-file"};
+    let offset = match file_type.is_dir() {
+        true => "icon-folder",
+        false => "icon-file"
+    };
     box_html! {
         div(class="file-entry") {
             a(class="file-link", href="#") {
