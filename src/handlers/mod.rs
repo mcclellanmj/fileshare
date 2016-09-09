@@ -20,6 +20,7 @@ mod access_shared;
 mod filelist;
 pub use self::access_shared::AccessSharedHandler;
 pub use self::filelist::FilelistHandler;
+pub use self::filelist::SharedFilelistHandler;
 
 pub struct StaticByteHandler {
    bytes: &'static [u8]

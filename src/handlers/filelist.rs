@@ -9,9 +9,13 @@ use iron::modifiers::Header;
 use std::path::{Path, PathBuf};
 use std::fs;
 use std::fs::DirEntry;
-use filetools::files;
+use std::cmp::Ordering;
+use std::cmp::Ord;
 
+use filetools::files;
+use filetools::dir;
 use http::Params;
+use database::ShareDatabase;
 
 use rustc_serialize::json;
 
@@ -36,8 +40,24 @@ impl FileDetails {
     }
 }
 
+fn sorting(x: &FileDetails, y: &FileDetails) -> Ordering {
+    match (x.is_folder, y.is_folder) {
+        (false, true) => Ordering::Greater,
+        (true, false) => Ordering::Less,
+        _ => x.short_name.cmp(&y.short_name)
+    }
+}
+
 fn get_file_list(path: &Path) -> fs::ReadDir {
     fs::read_dir(path).unwrap()
+}
+
+fn json_folder_listing(path: &Path) -> String {
+    let files = get_file_list(path);
+    let mut file_infos = files.map(|x| FileDetails::from_dir_entry(&x.unwrap())).collect::<Vec<FileDetails>>();
+    file_infos.sort_by(sorting);
+
+    json::encode(&file_infos).unwrap()
 }
 
 pub struct FilelistHandler {
@@ -58,15 +78,62 @@ impl Handler for FilelistHandler {
 
         let folder_to_view = params
             .get_first_param(&String::from("folder_path"))
-            .map(|ref x| Arc::new(Path::new(x).to_owned()))
-            .unwrap_or(root);
+            .map(|ref x| Path::new(x).to_owned())
+            .unwrap_or(root.as_ref().clone());
 
-        let files = get_file_list(folder_to_view.as_ref());
-        let file_infos = files.map(|x| FileDetails::from_dir_entry(&x.unwrap())).collect::<Vec<FileDetails>>();
+        if folder_to_view.is_dir() {
+            let json = json_folder_listing(&folder_to_view);
+            let headers = Header(ContentType::json());
+            Ok(Response::with((status::Ok, json, headers)))
+        } else {
+            Ok(Response::with((status::BadRequest, "Requested path is not a folder.")))
+        }
+    }
+}
 
-        let json = json::encode(&file_infos).unwrap();
+pub struct SharedFilelistHandler {
+    database: Arc<ShareDatabase>
+}
 
-        let headers = Header(ContentType::json());
-        Ok(Response::with((status::Ok, json, headers)))
+impl SharedFilelistHandler {
+    pub fn new(database: Arc<ShareDatabase>) -> SharedFilelistHandler {
+        SharedFilelistHandler {
+            database: database
+        }
+    }
+}
+
+impl Handler for SharedFilelistHandler {
+    fn handle(&self, request: &mut Request) -> IronResult<Response> {
+        let url = request.url.clone().into_generic_url();
+        let params = Params::new(&url);
+
+        // Get the shared parameter and fetch it from the database
+        let shared = params.get_first_param(&"hash".to_string()).and_then(|hash| {
+            let database = self.database.clone();
+            database.get_shared_by_hash(&hash).map(|ref x| Path::new(x).to_owned())
+        });
+
+        // Get the path the user selected or else use the path of the shared file
+        let path = params.get_first_param(&"folder_path".to_string())
+            .map(|x| Path::new(&x).to_owned())
+            .or(shared.clone());
+
+        match shared {
+            None => Ok(Response::with((status::BadRequest, "Invalid or Missing the hash"))),
+            Some(shared_path) => {
+                let folder = path.unwrap();
+                if dir::is_child_of(&shared_path, &folder) {
+                    if folder.is_dir() {
+                        let headers = Header(ContentType::json());
+                        Ok(Response::with((status::Ok, json_folder_listing(&folder), headers)))
+                    } else {
+                        Ok(Response::with((status::BadRequest, "Shared resource is not a directory")))
+                    }
+                } else {
+                    Ok(Response::with((status::BadRequest, "Cannot access files outside of shared directory")))
+                }
+            }
+        }
     }
 }

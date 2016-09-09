@@ -20,7 +20,7 @@ use iron::modifiers::Header;
 use iron::status;
 use iron::headers::ContentType;
 use router::Router;
-use handlers::{StaticByteHandler, RedirectHandler, AccessSharedHandler, ShareHandler, DownloadHandler, FilelistHandler};
+use handlers::{StaticByteHandler, RedirectHandler, AccessSharedHandler, ShareHandler, DownloadHandler, FilelistHandler, SharedFilelistHandler};
 
 use rendering::files;
 
@@ -45,6 +45,7 @@ fn main() {
     router.get("/index.html", index);
     router.get("/", RedirectHandler::new("index.html"));
     router.get("/view", FilelistHandler::new(root_folder.clone()));
+    router.get("/shared/view", SharedFilelistHandler::new(database.clone()));
     router.get("/shared", AccessSharedHandler::new(database.clone()));
     router.get("/download", DownloadHandler::new(root_folder.clone()));
     router.get("/share", ShareHandler::new(database.clone(), root_folder.clone()));
