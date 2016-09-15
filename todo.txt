@@ -1,6 +1,7 @@
+- Change to a json based backend approach, remove the horrorshow templating
 - Merge the rendering folders and the handler folders together, that way the handler and what it renders is all together
+  - Progress started with this
 - Cleanup filetools, probably don't need these splitup into different files
 - Start making some tests
-- Find out if the Params function can be made to use &str instead of String
 - Fix the unwraps, particularly in the is_child_of which can error out given any invalid path
-- Figure out the design
+- Find out if the Params function can be made to use &str instead of String

@@ -43,6 +43,7 @@ fn main() {
     let root_folder = Arc::new(Path::new(".").canonicalize().unwrap());
 
     router.get("/index.html", index);
+    router.get("/frontend.html", frontend);
     router.get("/", RedirectHandler::new("index.html"));
     router.get("/view", FilelistHandler::new(root_folder.clone()));
     router.get("/shared/view", SharedFilelistHandler::new(database.clone()));
@@ -58,6 +59,11 @@ fn main() {
         let rendered_page = files::render("Files", get_file_list(Path::new(".")).map(|x| x.unwrap()));
 
         Ok(Response::with((status::Ok, rendered_page, headers)))
+    }
+
+    fn frontend(_: &mut Request) -> IronResult<Response> {
+        let headers = Header(ContentType::html());
+        Ok(Response::with((status::Ok, Path::new("frontend.html"), headers)))
     }
 
     let request_chain = Chain::new(router);
