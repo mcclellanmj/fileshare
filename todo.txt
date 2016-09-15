@@ -1,6 +1,8 @@
 - Change to a json based backend approach, remove the horrorshow templating
+  - Removed horrorshow, need to add the json based services for sharing
 - Merge the rendering folders and the handler folders together, that way the handler and what it renders is all together
   - Progress started with this
+  - Should be easier now that its all json
 - Cleanup filetools, probably don't need these splitup into different files
 - Start making some tests
 - Fix the unwraps, particularly in the is_child_of which can error out given any invalid path

@@ -4,7 +4,6 @@ use iron::headers::ContentType;
 use iron::modifiers::{RedirectRaw, Header};
 use url::form_urlencoded;
 use uuid::Uuid;
-use rendering::share;
 use std::path::{Path, PathBuf};
 
 use http::headers::download_file_header;
@@ -102,9 +101,8 @@ impl Handler for ShareHandler {
             }
 
             let headers = Header(ContentType::html());
-            let rendered_page = share::render(f.as_path());
 
-            Ok(Response::with((status::Ok, rendered_page, headers)))
+            Ok(Response::with((status::NotImplemented, "Not yet implemented", headers)))
         } else {
             Ok(Response::with((status::BadRequest, "No valid file found in the filename param, ensure that filename is set on url parameters and that it is a valid file")))
         }

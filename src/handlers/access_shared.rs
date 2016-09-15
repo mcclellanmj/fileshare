@@ -12,12 +12,9 @@ use database::ShareDatabase;
 
 use std::fs;
 use http::headers::download_file_header;
-use horrorshow::{Template, RenderBox};
 use std::fs::DirEntry;
 use filetools::dir;
 use iron::headers::ContentType;
-
-use html;
 
 pub struct AccessSharedHandler {
     database : Arc<ShareDatabase>
@@ -31,54 +28,12 @@ impl AccessSharedHandler {
     }
 }
 
-fn render_file (entry: &DirEntry, hash: String) -> Box<RenderBox> {
-    let file_name = entry.file_name();
-    let file_type = entry.file_type().unwrap();
-    let full_path = String::from(entry.path().into_os_string().to_str().unwrap());
-
-    let offset = if file_type.is_dir() {"icon-folder"} else {"icon-file"};
-    box_html! {
-        div(class="file-entry") {
-            a(class="file-link", href=format!("/shared?hash={}&filepath={}", hash, full_path)) {
-                span(class=format!("entry-icon {}", offset)) : raw!("");
-                span : file_name.to_str().unwrap();
-            }
-        }
-    }
-}
-
-fn render_shared_folder<I: Iterator<Item=DirEntry>>(files: I, hash: String) -> String {
-    let mut sorted_files = files.collect::<Vec<DirEntry>>();
-    sorted_files.sort_by(dir::sort);
-    let title = "Shared Folder";
-
-    (html! {
-        : raw!("<!DOCTYPE html>");
-        html {
-            : html::head(title);
-            body {
-                main {
-                    header { h1 : title}
-                    section(id="files") {
-                        div(class="file-list") {
-                            @ for file in sorted_files {
-                                : render_file(&file, hash.clone());
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }).into_string().unwrap()
-}
-
 fn show_shared_folder(f: PathBuf, hash: String) -> Response {
     let headers = Header(ContentType::html());
 
     let file_list = fs::read_dir(f).unwrap().map(|x| x.unwrap());
-    let rendered_page = render_shared_folder(file_list, hash);
 
-    Response::with((status::Ok, rendered_page, headers))
+    Response::with((status::NotImplemented, "Not yet implemented", headers))
 }
 
 fn download_response(f: PathBuf) -> Response {
