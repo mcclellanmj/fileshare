@@ -12,12 +12,9 @@ use http::map_params;
 use database::ShareDatabase;
 use std::sync::Arc;
 use filetools;
-use filetools::dir;
 use iron::status;
 
-mod access_shared;
 mod filelist;
-pub use self::access_shared::AccessSharedHandler;
 pub use self::filelist::FilelistHandler;
 pub use self::filelist::SharedFilelistHandler;
 
@@ -83,7 +80,7 @@ impl Handler for ShareHandler {
                 .and_then(|x| if x.is_empty() {None} else {
                     let full_path = Path::new(x);
 
-                    if full_path.exists() && dir::is_child_of(&serve_dir, &full_path.to_path_buf()) {
+                    if full_path.exists() && filetools::is_child_of(&serve_dir, &full_path.to_path_buf()) {
                         Some(full_path.canonicalize().unwrap())
                     } else {
                         None
@@ -94,7 +91,7 @@ impl Handler for ShareHandler {
         if let Some(f) = filepath {
             {
                 let uuid = Uuid::new_v4().simple().to_string();
-                let filepath = filetools::files::make_string(&f);
+                let filepath = filetools::make_string(&f);
 
                 let num_rows_added = self.connection.add_shared_file(&uuid, &String::from(filepath));
                 println!("Shared file [{}] with uuid [{}] and added [{}] rows to database", filepath, uuid, num_rows_added);

@@ -17,9 +17,8 @@ use iron::modifiers::Header;
 use iron::status;
 use iron::headers::ContentType;
 use router::Router;
-use handlers::{StaticByteHandler, RedirectHandler, AccessSharedHandler, ShareHandler, DownloadHandler, FilelistHandler, SharedFilelistHandler};
+use handlers::{StaticByteHandler, RedirectHandler, ShareHandler, DownloadHandler, FilelistHandler, SharedFilelistHandler};
 
-use std::fs;
 use std::path::Path;
 
 use std::sync::Arc;
@@ -27,10 +26,6 @@ use std::sync::Arc;
 static ICONS_128: &'static [u8] = include_bytes!("../resources/icons-128.png");
 static ICONS_64: &'static [u8] = include_bytes!("../resources/icons-64.png");
 static ICONS_MOBILE: &'static [u8] = include_bytes!("../resources/icons-mobile.png");
-
-fn get_file_list(path: &Path) -> fs::ReadDir {
-    fs::read_dir(path).unwrap()
-}
 
 fn main() {
     let mut router = Router::new();    
@@ -42,7 +37,6 @@ fn main() {
     router.get("/", RedirectHandler::new("frontend.html"));
     router.get("/view", FilelistHandler::new(root_folder.clone()));
     router.get("/shared/view", SharedFilelistHandler::new(database.clone()));
-    router.get("/shared", AccessSharedHandler::new(database.clone()));
     router.get("/download", DownloadHandler::new(root_folder.clone()));
     router.get("/share", ShareHandler::new(database.clone(), root_folder.clone()));
     router.get("/img/icons-mobile.png", StaticByteHandler::new(ICONS_MOBILE));

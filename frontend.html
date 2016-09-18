@@ -9186,6 +9186,7 @@ var _user$project$Main$ShareFailed = function (a) {
 var _user$project$Main$ShareFile = function (a) {
 	return {ctor: 'ShareFile', _0: a};
 };
+var _user$project$Main$WindowSizeFailed = {ctor: 'WindowSizeFailed'};
 var _user$project$Main$WindowResize = function (a) {
 	return {ctor: 'WindowResize', _0: a};
 };
@@ -9193,6 +9194,13 @@ var _user$project$Main$windowChange = function (dim) {
 	return _user$project$Main$WindowResize(
 		{ctor: '_Tuple2', _0: dim.width, _1: dim.height});
 };
+var _user$project$Main$getCurrentWindowSize = A3(
+	_elm_lang$core$Task$perform,
+	function (_p2) {
+		return _user$project$Main$WindowSizeFailed;
+	},
+	_user$project$Main$windowChange,
+	_elm_lang$window$Window$size);
 var _user$project$Main$DirectoryFetchFailed = function (a) {
 	return {ctor: 'DirectoryFetchFailed', _0: a};
 };
@@ -9206,28 +9214,38 @@ var _user$project$Main$fetchCmd = function (path) {
 		_user$project$Main$DirectoryFetched,
 		_user$project$Service$fetchFiles(path));
 };
+var _user$project$Main$init = function () {
+	var model = {
+		title: 'Hello',
+		windowSize: _elm_lang$core$Maybe$Nothing,
+		files: _elm_lang$core$Native_List.fromArray(
+			[])
+	};
+	return {
+		ctor: '_Tuple2',
+		_0: model,
+		_1: _elm_lang$core$Platform_Cmd$batch(
+			_elm_lang$core$Native_List.fromArray(
+				[
+					_user$project$Main$fetchCmd('.'),
+					_user$project$Main$getCurrentWindowSize
+				]))
+	};
+}();
 var _user$project$Main$update = F2(
 	function (msg, model) {
-		var _p2 = msg;
-		switch (_p2.ctor) {
-			case 'DoNothing':
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{title: 'Hello Nothing'}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				};
+		var _p3 = msg;
+		switch (_p3.ctor) {
 			case 'FetchDirectory':
-				var _p3 = _p2._0;
+				var _p4 = _p3._0;
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
 						{
-							title: A2(_elm_lang$core$Basics_ops['++'], 'Loading ', _p3.fullPath)
+							title: A2(_elm_lang$core$Basics_ops['++'], 'Loading ', _p4.fullPath)
 						}),
-					_1: _user$project$Main$fetchCmd(_p3.fullPath)
+					_1: _user$project$Main$fetchCmd(_p4.fullPath)
 				};
 			case 'DirectoryFetchFailed':
 				return {
@@ -9242,7 +9260,17 @@ var _user$project$Main$update = F2(
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{title: 'Got the directory', files: _p2._0}),
+						{title: 'Got the directory', files: _p3._0}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'WindowResize':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{
+							windowSize: _elm_lang$core$Maybe$Just(_p3._0)
+						}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			default:
@@ -9250,9 +9278,7 @@ var _user$project$Main$update = F2(
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{
-							windowSize: _elm_lang$core$Maybe$Just(_p2._0)
-						}),
+						{title: 'Failed to get window size', windowSize: _elm_lang$core$Maybe$Nothing}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 		}
@@ -9313,8 +9339,8 @@ var _user$project$Main$renderFiles = function (files) {
 			[]),
 		A2(_elm_lang$core$List$map, _user$project$Main$renderFile, files));
 };
-var _user$project$Main$view = function (_p4) {
-	var _p5 = _p4;
+var _user$project$Main$view = function (_p5) {
+	var _p6 = _p5;
 	return A2(
 		_elm_lang$html$Html$div,
 		_elm_lang$core$Native_List.fromArray(
@@ -9327,36 +9353,10 @@ var _user$project$Main$view = function (_p4) {
 			]),
 		_elm_lang$core$Native_List.fromArray(
 			[
-				_user$project$Main$renderMenu(_p5.title),
-				_user$project$Main$renderFiles(_p5.files)
+				_user$project$Main$renderMenu(_p6.title),
+				_user$project$Main$renderFiles(_p6.files)
 			]));
 };
-var _user$project$Main$DoNothing = {ctor: 'DoNothing'};
-var _user$project$Main$getCurrentWindowSize = A3(
-	_elm_lang$core$Task$perform,
-	function (_p6) {
-		return _user$project$Main$DoNothing;
-	},
-	_user$project$Main$windowChange,
-	_elm_lang$window$Window$size);
-var _user$project$Main$init = function () {
-	var model = {
-		title: 'Hello',
-		windowSize: _elm_lang$core$Maybe$Nothing,
-		files: _elm_lang$core$Native_List.fromArray(
-			[])
-	};
-	return {
-		ctor: '_Tuple2',
-		_0: model,
-		_1: _elm_lang$core$Platform_Cmd$batch(
-			_elm_lang$core$Native_List.fromArray(
-				[
-					_user$project$Main$fetchCmd('.'),
-					_user$project$Main$getCurrentWindowSize
-				]))
-	};
-}();
 var _user$project$Main$main = {
 	main: _elm_lang$html$Html_App$program(
 		{

@@ -12,8 +12,7 @@ use std::fs::DirEntry;
 use std::cmp::Ordering;
 use std::cmp::Ord;
 
-use filetools::files;
-use filetools::dir;
+use filetools;
 use http::Params;
 use database::ShareDatabase;
 
@@ -32,7 +31,7 @@ impl FileDetails {
         let metadata = entry.metadata().unwrap();
 
         FileDetails {
-            full_path: String::from(files::make_string(&entry.path())),
+            full_path: String::from(filetools::make_string(&entry.path())),
             short_name: entry.file_name().into_string().unwrap(),
             size: metadata.len(),
             is_folder: metadata.is_dir()
@@ -123,7 +122,7 @@ impl Handler for SharedFilelistHandler {
             None => Ok(Response::with((status::BadRequest, "Invalid or Missing the hash"))),
             Some(shared_path) => {
                 let folder = path.unwrap();
-                if dir::is_child_of(&shared_path, &folder) {
+                if filetools::is_child_of(&shared_path, &folder) {
                     if folder.is_dir() {
                         let headers = Header(ContentType::json());
                         Ok(Response::with((status::Ok, json_folder_listing(&folder), headers)))
