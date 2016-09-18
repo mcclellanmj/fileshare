@@ -8969,11 +8969,102 @@ var _evancz$elm_http$Http$post = F3(
 			decoder,
 			A2(_evancz$elm_http$Http$send, _evancz$elm_http$Http$defaultSettings, request));
 	});
-var _user$project$Main$renderSingleFile = function (file) {
+var _user$project$IconImage$iconPosition = function (icon) {
+	var _p0 = icon;
+	switch (_p0.ctor) {
+		case 'Folder':
+			return '0px 0px';
+		case 'File':
+			return '-32px 0px';
+		case 'Share':
+			return '-64px 0px';
+		default:
+			return '-96px 0px';
+	}
+};
+var _user$project$IconImage$iconStyle = F2(
+	function (icon, extraStyle) {
+		return _elm_lang$html$Html_Attributes$style(
+			A2(
+				_elm_lang$core$Basics_ops['++'],
+				_elm_lang$core$Native_List.fromArray(
+					[
+						{ctor: '_Tuple2', _0: 'width', _1: '32px'},
+						{ctor: '_Tuple2', _0: 'height', _1: '32px'},
+						{
+						ctor: '_Tuple2',
+						_0: 'background-position',
+						_1: _user$project$IconImage$iconPosition(icon)
+					},
+						{ctor: '_Tuple2', _0: 'background-image', _1: 'url(\'/img/icons-mobile.png\')'},
+						{ctor: '_Tuple2', _0: 'display', _1: 'inline-block'}
+					]),
+				extraStyle));
+	});
+var _user$project$IconImage$iconElement = function (icon) {
+	return A2(
+		_elm_lang$html$Html$span,
+		_elm_lang$core$Native_List.fromArray(
+			[
+				A2(
+				_user$project$IconImage$iconStyle,
+				icon,
+				_elm_lang$core$Native_List.fromArray(
+					[]))
+			]),
+		_elm_lang$core$Native_List.fromArray(
+			[]));
+};
+var _user$project$IconImage$Menu = {ctor: 'Menu'};
+var _user$project$IconImage$Share = {ctor: 'Share'};
+var _user$project$IconImage$File = {ctor: 'File'};
+var _user$project$IconImage$Folder = {ctor: 'Folder'};
+var _user$project$Service$File = F4(
+	function (a, b, c, d) {
+		return {shortName: a, fullPath: b, isFolder: c, size: d};
+	});
+var _user$project$Service$parseFiles = function () {
+	var file = A5(
+		_elm_lang$core$Json_Decode$object4,
+		_user$project$Service$File,
+		A2(_elm_lang$core$Json_Decode_ops[':='], 'short_name', _elm_lang$core$Json_Decode$string),
+		A2(_elm_lang$core$Json_Decode_ops[':='], 'full_path', _elm_lang$core$Json_Decode$string),
+		A2(_elm_lang$core$Json_Decode_ops[':='], 'is_folder', _elm_lang$core$Json_Decode$bool),
+		A2(_elm_lang$core$Json_Decode_ops[':='], 'size', _elm_lang$core$Json_Decode$int));
+	return _elm_lang$core$Json_Decode$list(file);
+}();
+var _user$project$Service$fetchFiles = function (path) {
+	var url = A2(
+		_evancz$elm_http$Http$url,
+		'/view',
+		_elm_lang$core$Native_List.fromArray(
+			[
+				{ctor: '_Tuple2', _0: 'folder_path', _1: path}
+			]));
+	return A2(_evancz$elm_http$Http$get, _user$project$Service$parseFiles, url);
+};
+var _user$project$Main$drawMobile = function (model) {
+	return A2(
+		_elm_lang$html$Html$h1,
+		_elm_lang$core$Native_List.fromArray(
+			[]),
+		_elm_lang$core$Native_List.fromArray(
+			[]));
+};
+var _user$project$Main$renderMenu = function (folderName) {
 	return A2(
 		_elm_lang$html$Html$div,
 		_elm_lang$core$Native_List.fromArray(
-			[]),
+			[
+				_elm_lang$html$Html_Attributes$style(
+				_elm_lang$core$Native_List.fromArray(
+					[
+						{ctor: '_Tuple2', _0: 'padding', _1: '5px'},
+						{ctor: '_Tuple2', _0: 'display', _1: 'flex'},
+						{ctor: '_Tuple2', _0: 'background-color', _1: 'black'},
+						{ctor: '_Tuple2', _0: 'color', _1: 'white'}
+					]))
+			]),
 		_elm_lang$core$Native_List.fromArray(
 			[
 				A2(
@@ -8982,8 +9073,85 @@ var _user$project$Main$renderSingleFile = function (file) {
 					[]),
 				_elm_lang$core$Native_List.fromArray(
 					[
-						_elm_lang$html$Html$text(file.shortName)
+						_elm_lang$html$Html$text(folderName)
+					])),
+				A2(
+				_elm_lang$html$Html$div,
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html_Attributes$style(
+						_elm_lang$core$Native_List.fromArray(
+							[
+								{ctor: '_Tuple2', _0: 'margin-left', _1: 'auto'}
+							]))
+					]),
+				_elm_lang$core$Native_List.fromArray(
+					[
+						A2(
+						_elm_lang$html$Html$span,
+						_elm_lang$core$Native_List.fromArray(
+							[]),
+						_elm_lang$core$Native_List.fromArray(
+							[
+								_elm_lang$html$Html$text('d')
+							])),
+						A2(
+						_elm_lang$html$Html$span,
+						_elm_lang$core$Native_List.fromArray(
+							[]),
+						_elm_lang$core$Native_List.fromArray(
+							[
+								_elm_lang$html$Html$text('u')
+							]))
 					]))
+			]));
+};
+var _user$project$Main$renderSingleFile = function (file) {
+	var download_url = A2(
+		_evancz$elm_http$Http$url,
+		'/download',
+		_elm_lang$core$Native_List.fromArray(
+			[
+				{ctor: '_Tuple2', _0: 'filename', _1: file.fullPath}
+			]));
+	return A2(
+		_elm_lang$html$Html$div,
+		_elm_lang$core$Native_List.fromArray(
+			[
+				_elm_lang$html$Html_Attributes$style(
+				_elm_lang$core$Native_List.fromArray(
+					[
+						{ctor: '_Tuple2', _0: 'display', _1: 'flex'}
+					]))
+			]),
+		_elm_lang$core$Native_List.fromArray(
+			[
+				A2(
+				_elm_lang$html$Html$a,
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html_Attributes$href(download_url)
+					]),
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_user$project$IconImage$iconElement(_user$project$IconImage$File),
+						_elm_lang$html$Html$text(file.shortName)
+					])),
+				A2(
+				_elm_lang$html$Html$a,
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html_Attributes$href('#'),
+						A2(
+						_user$project$IconImage$iconStyle,
+						_user$project$IconImage$Share,
+						_elm_lang$core$Native_List.fromArray(
+							[
+								{ctor: '_Tuple2', _0: 'margin-left', _1: 'auto'}
+							]))
+					]),
+				_elm_lang$core$Native_List.fromArray(
+					[]))
 			]));
 };
 var _user$project$Main$renderCoords = function (_p0) {
@@ -9006,20 +9174,18 @@ var _user$project$Main$Model = F3(
 	function (a, b, c) {
 		return {title: a, windowSize: b, files: c};
 	});
-var _user$project$Main$File = F4(
-	function (a, b, c, d) {
-		return {shortName: a, fullPath: b, isFolder: c, size: d};
-	});
-var _user$project$Main$parseFiles = function () {
-	var file = A5(
-		_elm_lang$core$Json_Decode$object4,
-		_user$project$Main$File,
-		A2(_elm_lang$core$Json_Decode_ops[':='], 'short_name', _elm_lang$core$Json_Decode$string),
-		A2(_elm_lang$core$Json_Decode_ops[':='], 'full_path', _elm_lang$core$Json_Decode$string),
-		A2(_elm_lang$core$Json_Decode_ops[':='], 'is_folder', _elm_lang$core$Json_Decode$bool),
-		A2(_elm_lang$core$Json_Decode_ops[':='], 'size', _elm_lang$core$Json_Decode$int));
-	return _elm_lang$core$Json_Decode$list(file);
-}();
+var _user$project$Main$FolderOptions = function (a) {
+	return {ctor: 'FolderOptions', _0: a};
+};
+var _user$project$Main$FileShared = function (a) {
+	return {ctor: 'FileShared', _0: a};
+};
+var _user$project$Main$ShareFailed = function (a) {
+	return {ctor: 'ShareFailed', _0: a};
+};
+var _user$project$Main$ShareFile = function (a) {
+	return {ctor: 'ShareFile', _0: a};
+};
 var _user$project$Main$WindowResize = function (a) {
 	return {ctor: 'WindowResize', _0: a};
 };
@@ -9033,19 +9199,12 @@ var _user$project$Main$DirectoryFetchFailed = function (a) {
 var _user$project$Main$DirectoryFetched = function (a) {
 	return {ctor: 'DirectoryFetched', _0: a};
 };
-var _user$project$Main$fetchFiles = function (path) {
-	var url = A2(
-		_evancz$elm_http$Http$url,
-		'/view',
-		_elm_lang$core$Native_List.fromArray(
-			[
-				{ctor: '_Tuple2', _0: 'folder_path', _1: path}
-			]));
+var _user$project$Main$fetchCmd = function (path) {
 	return A3(
 		_elm_lang$core$Task$perform,
 		_user$project$Main$DirectoryFetchFailed,
 		_user$project$Main$DirectoryFetched,
-		A2(_evancz$elm_http$Http$get, _user$project$Main$parseFiles, url));
+		_user$project$Service$fetchFiles(path));
 };
 var _user$project$Main$update = F2(
 	function (msg, model) {
@@ -9068,7 +9227,7 @@ var _user$project$Main$update = F2(
 						{
 							title: A2(_elm_lang$core$Basics_ops['++'], 'Loading ', _p3.fullPath)
 						}),
-					_1: _user$project$Main$fetchFiles(_p3.fullPath)
+					_1: _user$project$Main$fetchCmd(_p3.fullPath)
 				};
 			case 'DirectoryFetchFailed':
 				return {
@@ -9105,7 +9264,13 @@ var _user$project$Main$renderFolder = function (file) {
 	return A2(
 		_elm_lang$html$Html$div,
 		_elm_lang$core$Native_List.fromArray(
-			[]),
+			[
+				_elm_lang$html$Html_Attributes$style(
+				_elm_lang$core$Native_List.fromArray(
+					[
+						{ctor: '_Tuple2', _0: 'display', _1: 'flex'}
+					]))
+			]),
 		_elm_lang$core$Native_List.fromArray(
 			[
 				A2(
@@ -9118,8 +9283,24 @@ var _user$project$Main$renderFolder = function (file) {
 					]),
 				_elm_lang$core$Native_List.fromArray(
 					[
+						_user$project$IconImage$iconElement(_user$project$IconImage$Folder),
 						_elm_lang$html$Html$text(file.shortName)
-					]))
+					])),
+				A2(
+				_elm_lang$html$Html$a,
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html_Attributes$href('#'),
+						A2(
+						_user$project$IconImage$iconStyle,
+						_user$project$IconImage$Menu,
+						_elm_lang$core$Native_List.fromArray(
+							[
+								{ctor: '_Tuple2', _0: 'margin-left', _1: 'auto'}
+							]))
+					]),
+				_elm_lang$core$Native_List.fromArray(
+					[]))
 			]));
 };
 var _user$project$Main$renderFile = function (file) {
@@ -9137,29 +9318,16 @@ var _user$project$Main$view = function (_p4) {
 	return A2(
 		_elm_lang$html$Html$div,
 		_elm_lang$core$Native_List.fromArray(
-			[]),
+			[
+				_elm_lang$html$Html_Attributes$style(
+				_elm_lang$core$Native_List.fromArray(
+					[
+						{ctor: '_Tuple2', _0: 'max-width', _1: '400px'}
+					]))
+			]),
 		_elm_lang$core$Native_List.fromArray(
 			[
-				A2(
-				_elm_lang$html$Html$h1,
-				_elm_lang$core$Native_List.fromArray(
-					[]),
-				_elm_lang$core$Native_List.fromArray(
-					[
-						_elm_lang$html$Html$text(_p5.title)
-					])),
-				A2(
-				_elm_lang$html$Html$h1,
-				_elm_lang$core$Native_List.fromArray(
-					[]),
-				_elm_lang$core$Native_List.fromArray(
-					[
-						_elm_lang$html$Html$text(
-						A2(
-							_elm_lang$core$Maybe$withDefault,
-							'Size Unknown',
-							A2(_elm_lang$core$Maybe$map, _user$project$Main$renderCoords, _p5.windowSize)))
-					])),
+				_user$project$Main$renderMenu(_p5.title),
 				_user$project$Main$renderFiles(_p5.files)
 			]));
 };
@@ -9184,7 +9352,7 @@ var _user$project$Main$init = function () {
 		_1: _elm_lang$core$Platform_Cmd$batch(
 			_elm_lang$core$Native_List.fromArray(
 				[
-					_user$project$Main$fetchFiles('.'),
+					_user$project$Main$fetchCmd('.'),
 					_user$project$Main$getCurrentWindowSize
 				]))
 	};

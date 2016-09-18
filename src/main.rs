@@ -26,7 +26,7 @@ use std::sync::Arc;
 
 static ICONS_128: &'static [u8] = include_bytes!("../resources/icons-128.png");
 static ICONS_64: &'static [u8] = include_bytes!("../resources/icons-64.png");
-static ICONS_32: &'static [u8] = include_bytes!("../resources/icons-32.png");
+static ICONS_MOBILE: &'static [u8] = include_bytes!("../resources/icons-mobile.png");
 
 fn get_file_list(path: &Path) -> fs::ReadDir {
     fs::read_dir(path).unwrap()
@@ -45,7 +45,7 @@ fn main() {
     router.get("/shared", AccessSharedHandler::new(database.clone()));
     router.get("/download", DownloadHandler::new(root_folder.clone()));
     router.get("/share", ShareHandler::new(database.clone(), root_folder.clone()));
-    router.get("/img/icons-32.png", StaticByteHandler::new(ICONS_32));
+    router.get("/img/icons-mobile.png", StaticByteHandler::new(ICONS_MOBILE));
     router.get("/img/icons-64.png", StaticByteHandler::new(ICONS_64));
     router.get("/img/icons-128.png", StaticByteHandler::new(ICONS_128));
 
