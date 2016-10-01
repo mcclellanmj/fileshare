@@ -1,6 +1,8 @@
 - Add JSON service for sharing
+  - Add limit to size of body we will parse
+  - Change unwraps to something else
 - Add handler for downloading shared file
-- Add handler for viewing shared file, this will also need some kind of frontend
+- Add handler for viewing shared folder, this will also need some kind of frontend
 - Add security
 - Start making some tests
 - Fix the unwraps, particularly in the is_child_of which can error out given any invalid path

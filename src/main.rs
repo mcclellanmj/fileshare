@@ -38,7 +38,7 @@ fn main() {
     router.get("/view", FilelistHandler::new(root_folder.clone()));
     router.get("/shared/view", SharedFilelistHandler::new(database.clone()));
     router.get("/download", DownloadHandler::new(root_folder.clone()));
-    router.get("/share", ShareHandler::new(database.clone(), root_folder.clone()));
+    router.post("/share", ShareHandler::new(database.clone(), root_folder.clone()));
     router.get("/img/icons-mobile.png", StaticByteHandler::new(ICONS_MOBILE));
     router.get("/img/icons-64.png", StaticByteHandler::new(ICONS_64));
     router.get("/img/icons-128.png", StaticByteHandler::new(ICONS_128));

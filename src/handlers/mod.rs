@@ -3,20 +3,20 @@ use iron::{Request, Response, IronResult};
 use iron::headers::ContentType;
 use iron::modifiers::{RedirectRaw, Header};
 use url::form_urlencoded;
-use uuid::Uuid;
 use std::path::{Path, PathBuf};
 
 use http::headers::download_file_header;
 use http::map_params;
 
-use database::ShareDatabase;
 use std::sync::Arc;
-use filetools;
 use iron::status;
 
 mod filelist;
 pub use self::filelist::FilelistHandler;
 pub use self::filelist::SharedFilelistHandler;
+
+mod share;
+pub use self::share::ShareHandler;
 
 pub struct StaticByteHandler {
    bytes: &'static [u8]
@@ -48,61 +48,6 @@ impl RedirectHandler {
 impl Handler for RedirectHandler {
     fn handle(&self, _: &mut Request) -> IronResult<Response> {
         Ok(Response::with((status::Found, RedirectRaw(String::from(self.new_location)))))
-    }
-}
-
-pub struct ShareHandler {
-    root_folder: Arc<PathBuf>,
-    connection: Arc<ShareDatabase>
-}
-
-impl ShareHandler {
-    pub fn new(connection: Arc<ShareDatabase>, path: Arc<PathBuf>) -> ShareHandler {
-        ShareHandler {
-            connection: connection,
-            root_folder: path
-        }
-    }
-}
-
-impl Handler for ShareHandler {
-    fn handle(&self, req: &mut Request) -> IronResult<Response> {
-        let serve_dir = self.root_folder.clone();
-        let query = req.url.query();
-
-        let filepath = query.and_then(|q| {
-            let params = form_urlencoded::parse(q.as_bytes());
-            let param_map = map_params(params);
-
-            let filenames = param_map.get("filename");
-            filenames
-                .and_then(|f| f.first())
-                .and_then(|x| if x.is_empty() {None} else {
-                    let full_path = Path::new(x);
-
-                    if full_path.exists() && filetools::is_child_of(&serve_dir, &full_path.to_path_buf()) {
-                        Some(full_path.canonicalize().unwrap())
-                    } else {
-                        None
-                    }
-                })
-        });
-
-        if let Some(f) = filepath {
-            {
-                let uuid = Uuid::new_v4().simple().to_string();
-                let filepath = filetools::make_string(&f);
-
-                let num_rows_added = self.connection.add_shared_file(&uuid, &String::from(filepath));
-                println!("Shared file [{}] with uuid [{}] and added [{}] rows to database", filepath, uuid, num_rows_added);
-            }
-
-            let headers = Header(ContentType::html());
-
-            Ok(Response::with((status::NotImplemented, "Not yet implemented", headers)))
-        } else {
-            Ok(Response::with((status::BadRequest, "No valid file found in the filename param, ensure that filename is set on url parameters and that it is a valid file")))
-        }
     }
 }
 
