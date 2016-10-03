@@ -9580,6 +9580,47 @@ var _user$project$IconImage$Menu = {ctor: 'Menu'};
 var _user$project$IconImage$Share = {ctor: 'Share'};
 var _user$project$IconImage$File = {ctor: 'File'};
 var _user$project$IconImage$Folder = {ctor: 'Folder'};
+var _user$project$Service$createShareJson = F2(
+	function (path, email) {
+		var shareDetails = _elm_lang$core$Json_Encode$object(
+			_elm_lang$core$Native_List.fromArray(
+				[
+					{
+					ctor: '_Tuple2',
+					_0: 'full_path',
+					_1: _elm_lang$core$Json_Encode$string(path)
+				},
+					{
+					ctor: '_Tuple2',
+					_0: 'email',
+					_1: _elm_lang$core$Json_Encode$string(email)
+				}
+				]));
+		return A2(_elm_lang$core$Json_Encode$encode, 0, shareDetails);
+	});
+var _user$project$Service$ShareResult = F2(
+	function (a, b) {
+		return {uuid: a, url: b};
+	});
+var _user$project$Service$parseShare = A3(
+	_elm_lang$core$Json_Decode$object2,
+	_user$project$Service$ShareResult,
+	A2(_elm_lang$core$Json_Decode_ops[':='], 'uuid', _elm_lang$core$Json_Decode$string),
+	A2(_elm_lang$core$Json_Decode_ops[':='], 'url', _elm_lang$core$Json_Decode$string));
+var _user$project$Service$shareFile = F2(
+	function (path, email) {
+		var url = A2(
+			_evancz$elm_http$Http$url,
+			'/share',
+			_elm_lang$core$Native_List.fromArray(
+				[]));
+		return A3(
+			_evancz$elm_http$Http$post,
+			_user$project$Service$parseShare,
+			url,
+			_evancz$elm_http$Http$string(
+				A2(_user$project$Service$createShareJson, path, email)));
+	});
 var _user$project$Service$File = F4(
 	function (a, b, c, d) {
 		return {shortName: a, fullPath: b, isFolder: c, size: d};
@@ -9648,8 +9689,8 @@ var _user$project$SharePrompt$shareHeader = F2(
 						]))
 				]));
 	});
-var _user$project$SharePrompt$render = F2(
-	function (closeMsg, file) {
+var _user$project$SharePrompt$render = F3(
+	function (closeMsg, shareFn, file) {
 		return A2(
 			_elm_lang$html$Html$div,
 			_elm_lang$core$Native_List.fromArray(
@@ -9665,7 +9706,20 @@ var _user$project$SharePrompt$render = F2(
 					_elm_lang$core$Native_List.fromArray(
 						[]),
 					_elm_lang$core$Native_List.fromArray(
-						[]))
+						[
+							A2(
+							_elm_lang$html$Html$a,
+							_elm_lang$core$Native_List.fromArray(
+								[
+									_user$project$AttributesExtended$voidHref,
+									_elm_lang$html$Html_Events$onClick(
+									A2(shareFn, file, 'mcclellan.mj@gmail.com'))
+								]),
+							_elm_lang$core$Native_List.fromArray(
+								[
+									_elm_lang$html$Html$text('share it')
+								]))
+						]))
 				]));
 	});
 var _user$project$Main$renderFileHeader = function (folderName) {
@@ -9769,6 +9823,10 @@ var _user$project$Main$NotLoaded = {ctor: 'NotLoaded'};
 var _user$project$Main$FailedShare = function (a) {
 	return {ctor: 'FailedShare', _0: a};
 };
+var _user$project$Main$Sharing = F2(
+	function (a, b) {
+		return {ctor: 'Sharing', _0: a, _1: b};
+	});
 var _user$project$Main$Shared = function (a) {
 	return {ctor: 'Shared', _0: a};
 };
@@ -9776,6 +9834,27 @@ var _user$project$Main$Share = function (a) {
 	return {ctor: 'Share', _0: a};
 };
 var _user$project$Main$None = {ctor: 'None'};
+var _user$project$Main$Folder = {ctor: 'Folder'};
+var _user$project$Main$BadRoute = function (a) {
+	return {ctor: 'BadRoute', _0: a};
+};
+var _user$project$Main$Loading = {ctor: 'Loading'};
+var _user$project$Main$initialModel = {windowSize: _elm_lang$core$Maybe$Nothing, path: '', files: _user$project$Main$NotLoaded, active: _user$project$Main$Loading, prompt: _user$project$Main$None};
+var _user$project$Main$ClosePrompt = {ctor: 'ClosePrompt'};
+var _user$project$Main$ShareFinished = function (a) {
+	return {ctor: 'ShareFinished', _0: a};
+};
+var _user$project$Main$ShareFailed = function (a) {
+	return {ctor: 'ShareFailed', _0: a};
+};
+var _user$project$Main$shareCmd = F2(
+	function (file, email) {
+		return A3(
+			_elm_lang$core$Task$perform,
+			_user$project$Main$ShareFailed,
+			_user$project$Main$ShareFinished,
+			A2(_user$project$Service$shareFile, file.fullPath, email));
+	});
 var _user$project$Main$update = F2(
 	function (msg, model) {
 		var _p3 = msg;
@@ -9826,7 +9905,19 @@ var _user$project$Main$update = F2(
 						{prompt: _user$project$Main$None}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
-			default:
+			case 'ShareMsg':
+				var _p5 = _p3._0;
+				var _p4 = _p3._1;
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{
+							prompt: A2(_user$project$Main$Sharing, _p5, _p4)
+						}),
+					_1: A2(_user$project$Main$shareCmd, _p5, _p4)
+				};
+			case 'ShowSharePrompt':
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
@@ -9836,20 +9927,37 @@ var _user$project$Main$update = F2(
 						}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
+			case 'ShareFailed':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{
+							prompt: _user$project$Main$FailedShare(_p3._0)
+						}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			default:
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{
+							prompt: _user$project$Main$Shared(_p3._0)
+						}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
 		}
 	});
-var _user$project$Main$Folder = {ctor: 'Folder'};
-var _user$project$Main$BadRoute = function (a) {
-	return {ctor: 'BadRoute', _0: a};
-};
-var _user$project$Main$Loading = {ctor: 'Loading'};
-var _user$project$Main$initialModel = {windowSize: _elm_lang$core$Maybe$Nothing, path: '', files: _user$project$Main$NotLoaded, active: _user$project$Main$Loading, prompt: _user$project$Main$None};
-var _user$project$Main$ClosePrompt = {ctor: 'ClosePrompt'};
+var _user$project$Main$ShareMsg = F2(
+	function (a, b) {
+		return {ctor: 'ShareMsg', _0: a, _1: b};
+	});
 var _user$project$Main$ShowSharePrompt = function (a) {
 	return {ctor: 'ShowSharePrompt', _0: a};
 };
 var _user$project$Main$renderFile = function (file) {
-	var _p4 = file.isFolder ? {
+	var _p6 = file.isFolder ? {
 		ctor: '_Tuple2',
 		_0: _user$project$AddressableStates$generateFolderAddress(file.fullPath),
 		_1: _user$project$IconImage$Folder
@@ -9864,8 +9972,8 @@ var _user$project$Main$renderFile = function (file) {
 				])),
 		_1: _user$project$IconImage$File
 	};
-	var url = _p4._0;
-	var icon = _p4._1;
+	var url = _p6._0;
+	var icon = _p6._1;
 	return A2(
 		_elm_lang$html$Html$div,
 		_elm_lang$core$Native_List.fromArray(
@@ -9909,8 +10017,8 @@ var _user$project$Main$renderFile = function (file) {
 			]));
 };
 var _user$project$Main$renderFiles = function (files) {
-	var _p5 = files;
-	switch (_p5.ctor) {
+	var _p7 = files;
+	switch (_p7.ctor) {
 		case 'NotLoaded':
 			return A2(
 				_elm_lang$html$Html$div,
@@ -9925,7 +10033,7 @@ var _user$project$Main$renderFiles = function (files) {
 				_elm_lang$html$Html$div,
 				_elm_lang$core$Native_List.fromArray(
 					[]),
-				A2(_elm_lang$core$List$map, _user$project$Main$renderFile, _p5._0));
+				A2(_elm_lang$core$List$map, _user$project$Main$renderFile, _p7._0));
 		default:
 			return A2(
 				_elm_lang$html$Html$div,
@@ -9937,16 +10045,16 @@ var _user$project$Main$renderFiles = function (files) {
 						A2(
 							_elm_lang$core$Basics_ops['++'],
 							'Failed due to: ',
-							_user$project$Main$toErrorText(_p5._0)))
+							_user$project$Main$toErrorText(_p7._0)))
 					]));
 	}
 };
 var _user$project$Main$view = function (model) {
-	var _p6 = model.active;
-	switch (_p6.ctor) {
+	var _p8 = model.active;
+	switch (_p8.ctor) {
 		case 'Folder':
-			var _p7 = model.prompt;
-			switch (_p7.ctor) {
+			var _p9 = model.prompt;
+			switch (_p9.ctor) {
 				case 'None':
 					return A2(
 						_elm_lang$html$Html$div,
@@ -9964,7 +10072,25 @@ var _user$project$Main$view = function (model) {
 								_user$project$Main$renderFiles(model.files)
 							]));
 				case 'Share':
-					return A2(_user$project$SharePrompt$render, _user$project$Main$ClosePrompt, _p7._0);
+					return A3(_user$project$SharePrompt$render, _user$project$Main$ClosePrompt, _user$project$Main$ShareMsg, _p9._0);
+				case 'Shared':
+					return A2(
+						_elm_lang$html$Html$div,
+						_elm_lang$core$Native_List.fromArray(
+							[]),
+						_elm_lang$core$Native_List.fromArray(
+							[
+								_elm_lang$html$Html$text('Shared it')
+							]));
+				case 'Sharing':
+					return A2(
+						_elm_lang$html$Html$div,
+						_elm_lang$core$Native_List.fromArray(
+							[]),
+						_elm_lang$core$Native_List.fromArray(
+							[
+								_elm_lang$html$Html$text('Sharing it')
+							]));
 				default:
 					return A2(
 						_elm_lang$html$Html$div,
@@ -9972,7 +10098,7 @@ var _user$project$Main$view = function (model) {
 							[]),
 						_elm_lang$core$Native_List.fromArray(
 							[
-								_elm_lang$html$Html$text('Not implemented')
+								_elm_lang$html$Html$text('Failed it')
 							]));
 			}
 		case 'BadRoute':
@@ -9982,7 +10108,7 @@ var _user$project$Main$view = function (model) {
 					[]),
 				_elm_lang$core$Native_List.fromArray(
 					[
-						_elm_lang$html$Html$text(_p6._0)
+						_elm_lang$html$Html$text(_p8._0)
 					]));
 		default:
 			return A2(
@@ -10003,7 +10129,7 @@ var _user$project$Main$windowChange = function (dim) {
 };
 var _user$project$Main$getCurrentWindowSize = A3(
 	_elm_lang$core$Task$perform,
-	function (_p8) {
+	function (_p10) {
 		return _user$project$Main$WindowSizeFailed;
 	},
 	_user$project$Main$windowChange,
@@ -10023,25 +10149,25 @@ var _user$project$Main$fetchCmd = function (path) {
 };
 var _user$project$Main$urlUpdate = F2(
 	function (result, model) {
-		var _p9 = result;
-		if (_p9.ctor === 'Err') {
+		var _p11 = result;
+		if (_p11.ctor === 'Err') {
 			return {
 				ctor: '_Tuple2',
 				_0: _elm_lang$core$Native_Utils.update(
 					model,
 					{
-						active: _user$project$Main$BadRoute(_p9._0)
+						active: _user$project$Main$BadRoute(_p11._0)
 					}),
 				_1: _elm_lang$core$Platform_Cmd$none
 			};
 		} else {
-			var _p10 = _p9._0._0;
+			var _p12 = _p11._0._0;
 			return {
 				ctor: '_Tuple2',
 				_0: _elm_lang$core$Native_Utils.update(
 					model,
-					{active: _user$project$Main$Folder, path: _p10, files: _user$project$Main$NotLoaded}),
-				_1: _user$project$Main$fetchCmd(_p10)
+					{active: _user$project$Main$Folder, path: _p12, files: _user$project$Main$NotLoaded}),
+				_1: _user$project$Main$fetchCmd(_p12)
 			};
 		}
 	});
@@ -10054,7 +10180,7 @@ var _user$project$Main$main = {
 		_elm_lang$navigation$Navigation$makeParser(_user$project$AddressableStates$decode),
 		{
 			init: _user$project$Main$init,
-			subscriptions: function (_p11) {
+			subscriptions: function (_p13) {
 				return _elm_lang$window$Window$resizes(_user$project$Main$windowChange);
 			},
 			update: _user$project$Main$update,
