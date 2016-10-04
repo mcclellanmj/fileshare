@@ -46,9 +46,7 @@ impl Handler for ShareHandler {
 
         let mut request_body = String::new();
         req.body.read_to_string(&mut request_body).unwrap();
-        println!("Got the body");
         let share_request: ShareRequest = json::decode(&request_body).unwrap();
-        println!("Got the share request");
 
         let filepath = {
             let path = Path::new(&share_request.full_path).to_owned();
@@ -59,7 +57,6 @@ impl Handler for ShareHandler {
                 None
             }
         };
-        println!("Got the filepath");
 
         if let Some(f) = filepath {
             let uuid = Uuid::new_v4().simple().to_string();
@@ -70,9 +67,13 @@ impl Handler for ShareHandler {
 
             let headers = Header(ContentType::json());
 
+            let mut request_url = req.url.clone().into_generic_url();
+            request_url.set_path("/shared/view");
+            request_url.set_query(Some(&format!("hash={}", uuid)));
+
             let response = ShareResponse {
                 uuid: uuid,
-                url: "www.google.com".to_string()
+                url: request_url.into_string()
             };
 
             let response_json = json::encode(&response).unwrap();
