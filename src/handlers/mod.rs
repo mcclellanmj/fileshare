@@ -19,18 +19,19 @@ mod share;
 pub use self::share::ShareHandler;
 
 pub struct StaticByteHandler {
-   bytes: &'static [u8]
+    bytes: &'static [u8],
+    content_type: ContentType
 }
 
 impl StaticByteHandler {
-    pub fn new(bytes: &'static [u8]) -> StaticByteHandler {
-        StaticByteHandler {bytes: bytes}
+    pub fn new(bytes: &'static [u8], content_type: ContentType) -> StaticByteHandler {
+        StaticByteHandler {bytes: bytes, content_type: content_type}
     }
 }
 
 impl Handler for StaticByteHandler {
     fn handle(&self, _: &mut Request) -> IronResult<Response> {
-        let headers = Header(ContentType::png());
+        let headers = Header(self.content_type.clone());
         Ok(Response::with((status::Ok, self.bytes, headers)))
     }
 }

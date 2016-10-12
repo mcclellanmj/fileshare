@@ -1,4 +1,5 @@
 - Add limit to size of response body I parse
+- Make some sort of helper that will take all the statics and auto route them as well as allowing it to dynamically reload in debug builds
 - JSON should be camelcased, probably means I need custom serializers
 - Add handler for downloading shared file
 - Add handler for viewing shared folder, this will also need some kind of frontend
