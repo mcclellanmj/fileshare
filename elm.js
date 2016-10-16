@@ -10508,57 +10508,6 @@ var _user$project$AddressableStates$decode = function (location) {
 
 var _user$project$AttributesExtended$voidHref = _elm_lang$html$Html_Attributes$href('javascript:;');
 
-var _user$project$IconImage$iconPosition = function (icon) {
-	var _p0 = icon;
-	switch (_p0.ctor) {
-		case 'Folder':
-			return '0px 0px';
-		case 'File':
-			return '-32px 0px';
-		case 'Share':
-			return '-64px 0px';
-		default:
-			return '-96px 0px';
-	}
-};
-var _user$project$IconImage$iconStyle = F2(
-	function (icon, extraStyle) {
-		return _elm_lang$html$Html_Attributes$style(
-			A2(
-				_elm_lang$core$Basics_ops['++'],
-				_elm_lang$core$Native_List.fromArray(
-					[
-						{ctor: '_Tuple2', _0: 'width', _1: '32px'},
-						{ctor: '_Tuple2', _0: 'height', _1: '32px'},
-						{
-						ctor: '_Tuple2',
-						_0: 'background-position',
-						_1: _user$project$IconImage$iconPosition(icon)
-					},
-						{ctor: '_Tuple2', _0: 'background-image', _1: 'url(\'/img/icons-mobile.png\')'},
-						{ctor: '_Tuple2', _0: 'display', _1: 'inline-block'}
-					]),
-				extraStyle));
-	});
-var _user$project$IconImage$iconElement = function (icon) {
-	return A2(
-		_elm_lang$html$Html$span,
-		_elm_lang$core$Native_List.fromArray(
-			[
-				A2(
-				_user$project$IconImage$iconStyle,
-				icon,
-				_elm_lang$core$Native_List.fromArray(
-					[]))
-			]),
-		_elm_lang$core$Native_List.fromArray(
-			[]));
-};
-var _user$project$IconImage$Menu = {ctor: 'Menu'};
-var _user$project$IconImage$Share = {ctor: 'Share'};
-var _user$project$IconImage$File = {ctor: 'File'};
-var _user$project$IconImage$Folder = {ctor: 'Folder'};
-
 var _user$project$Service$createShareJson = F2(
 	function (path, email) {
 		var shareDetails = _elm_lang$core$Json_Encode$object(
@@ -10785,21 +10734,13 @@ var _user$project$Main$renderFileHeader = function (folderName) {
 				_elm_lang$core$Native_List.fromArray(
 					[
 						A2(
-						_elm_lang$html$Html$span,
-						_elm_lang$core$Native_List.fromArray(
-							[]),
+						_elm_lang$html$Html$a,
 						_elm_lang$core$Native_List.fromArray(
 							[
-								_elm_lang$html$Html$text('d')
-							])),
-						A2(
-						_elm_lang$html$Html$span,
+								_elm_lang$html$Html_Attributes$href('#/upload')
+							]),
 						_elm_lang$core$Native_List.fromArray(
-							[]),
-						_elm_lang$core$Native_List.fromArray(
-							[
-								_elm_lang$html$Html$text('u')
-							]))
+							[_Fresheyeball$elm_font_awesome$FontAwesome_Web$cloud_upload]))
 					]))
 			]));
 };
@@ -10986,7 +10927,7 @@ var _user$project$Main$renderFile = function (file) {
 	var _p6 = file.isFolder ? {
 		ctor: '_Tuple2',
 		_0: _user$project$AddressableStates$generateFolderAddress(file.fullPath),
-		_1: _user$project$IconImage$Folder
+		_1: _Fresheyeball$elm_font_awesome$FontAwesome_Web$folder
 	} : {
 		ctor: '_Tuple2',
 		_0: A2(
@@ -10996,7 +10937,7 @@ var _user$project$Main$renderFile = function (file) {
 				[
 					{ctor: '_Tuple2', _0: 'filename', _1: file.fullPath}
 				])),
-		_1: _user$project$IconImage$File
+		_1: _Fresheyeball$elm_font_awesome$FontAwesome_Web$sticky_note
 	};
 	var url = _p6._0;
 	var icon = _p6._1;
@@ -11016,11 +10957,27 @@ var _user$project$Main$renderFile = function (file) {
 				_elm_lang$html$Html$a,
 				_elm_lang$core$Native_List.fromArray(
 					[
-						_elm_lang$html$Html_Attributes$href(url)
+						_elm_lang$html$Html_Attributes$href(url),
+						_elm_lang$html$Html_Attributes$style(
+						_elm_lang$core$Native_List.fromArray(
+							[
+								{ctor: '_Tuple2', _0: 'font-size', _1: '1.75em'}
+							]))
 					]),
 				_elm_lang$core$Native_List.fromArray(
 					[
-						_user$project$IconImage$iconElement(icon),
+						A2(
+						_elm_lang$html$Html$span,
+						_elm_lang$core$Native_List.fromArray(
+							[
+								_elm_lang$html$Html_Attributes$style(
+								_elm_lang$core$Native_List.fromArray(
+									[
+										{ctor: '_Tuple2', _0: 'margin-right', _1: '.25em'}
+									]))
+							]),
+						_elm_lang$core$Native_List.fromArray(
+							[icon])),
 						_elm_lang$html$Html$text(file.shortName)
 					])),
 				A2(
@@ -11030,16 +10987,15 @@ var _user$project$Main$renderFile = function (file) {
 						_user$project$AttributesExtended$voidHref,
 						_elm_lang$html$Html_Events$onClick(
 						_user$project$Main$ShowSharePrompt(file)),
-						A2(
-						_user$project$IconImage$iconStyle,
-						_user$project$IconImage$Share,
+						_elm_lang$html$Html_Attributes$style(
 						_elm_lang$core$Native_List.fromArray(
 							[
-								{ctor: '_Tuple2', _0: 'margin-left', _1: 'auto'}
+								{ctor: '_Tuple2', _0: 'margin-left', _1: 'auto'},
+								{ctor: '_Tuple2', _0: 'font-size', _1: '1.75em'}
 							]))
 					]),
 				_elm_lang$core$Native_List.fromArray(
-					[]))
+					[_Fresheyeball$elm_font_awesome$FontAwesome_Web$share_alt]))
 			]));
 };
 var _user$project$Main$renderFiles = function (files) {

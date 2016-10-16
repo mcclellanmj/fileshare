@@ -36,6 +36,27 @@ impl Handler for StaticByteHandler {
     }
 }
 
+pub struct SingleFileHandler {
+    path: PathBuf,
+    content_type: ContentType
+}
+
+impl SingleFileHandler {
+    pub fn new(path: PathBuf, content_type: ContentType) -> SingleFileHandler {
+        SingleFileHandler {
+            path: path,
+            content_type: content_type
+        }
+    }
+}
+
+impl Handler for SingleFileHandler {
+    fn handle(&self, _: &mut Request) -> IronResult<Response> {
+        let headers = Header(self.content_type.clone());
+        Ok(Response::with((status::Ok, self.path.clone(), headers)))
+    }
+}
+
 pub struct RedirectHandler {
     new_location: &'static str
 }
