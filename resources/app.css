@@ -1,0 +1,28 @@
+.type-icon {
+    padding-left: .4em;
+}
+
+.folder-icon:visited, .folder-icon {
+    color: #eaca17;
+}
+
+.file-row > a:hover > span.folder-icon {
+    color: #afb649;
+}
+
+.file-icon, .file-icon:visited {
+    color: #d1d596;
+}
+
+.file-row > a:hover > span.file-icon {
+    color: #a7ad52;
+}
+
+a.action, a.action:visited {
+    color: #e3e2de;
+}
+
+.file-row > a.action:hover {
+    color: #5e5c50;
+}
+

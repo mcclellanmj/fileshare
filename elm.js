@@ -10925,11 +10925,16 @@ var _user$project$Main$ShowSharePrompt = function (a) {
 };
 var _user$project$Main$renderFile = function (file) {
 	var _p6 = file.isFolder ? {
-		ctor: '_Tuple2',
+		ctor: '_Tuple3',
 		_0: _user$project$AddressableStates$generateFolderAddress(file.fullPath),
-		_1: _Fresheyeball$elm_font_awesome$FontAwesome_Web$folder
+		_1: _Fresheyeball$elm_font_awesome$FontAwesome_Web$folder,
+		_2: _elm_lang$core$Native_List.fromArray(
+			[
+				{ctor: '_Tuple2', _0: 'folder-icon', _1: true},
+				{ctor: '_Tuple2', _0: 'type-icon', _1: true}
+			])
 	} : {
-		ctor: '_Tuple2',
+		ctor: '_Tuple3',
 		_0: A2(
 			_evancz$elm_http$Http$url,
 			'/download',
@@ -10937,10 +10942,16 @@ var _user$project$Main$renderFile = function (file) {
 				[
 					{ctor: '_Tuple2', _0: 'filename', _1: file.fullPath}
 				])),
-		_1: _Fresheyeball$elm_font_awesome$FontAwesome_Web$sticky_note
+		_1: _Fresheyeball$elm_font_awesome$FontAwesome_Web$sticky_note,
+		_2: _elm_lang$core$Native_List.fromArray(
+			[
+				{ctor: '_Tuple2', _0: 'file-icon', _1: true},
+				{ctor: '_Tuple2', _0: 'type-icon', _1: true}
+			])
 	};
 	var url = _p6._0;
 	var icon = _p6._1;
+	var classes = _p6._2;
 	return A2(
 		_elm_lang$html$Html$div,
 		_elm_lang$core$Native_List.fromArray(
@@ -10949,6 +10960,11 @@ var _user$project$Main$renderFile = function (file) {
 				_elm_lang$core$Native_List.fromArray(
 					[
 						{ctor: '_Tuple2', _0: 'display', _1: 'flex'}
+					])),
+				_elm_lang$html$Html_Attributes$classList(
+				_elm_lang$core$Native_List.fromArray(
+					[
+						{ctor: '_Tuple2', _0: 'file-row', _1: true}
 					]))
 			]),
 		_elm_lang$core$Native_List.fromArray(
@@ -10974,7 +10990,8 @@ var _user$project$Main$renderFile = function (file) {
 								_elm_lang$core$Native_List.fromArray(
 									[
 										{ctor: '_Tuple2', _0: 'margin-right', _1: '.25em'}
-									]))
+									])),
+								_elm_lang$html$Html_Attributes$classList(classes)
 							]),
 						_elm_lang$core$Native_List.fromArray(
 							[icon])),
@@ -10992,6 +11009,11 @@ var _user$project$Main$renderFile = function (file) {
 							[
 								{ctor: '_Tuple2', _0: 'margin-left', _1: 'auto'},
 								{ctor: '_Tuple2', _0: 'font-size', _1: '1.75em'}
+							])),
+						_elm_lang$html$Html_Attributes$classList(
+						_elm_lang$core$Native_List.fromArray(
+							[
+								{ctor: '_Tuple2', _0: 'action', _1: true}
 							]))
 					]),
 				_elm_lang$core$Native_List.fromArray(
