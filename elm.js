@@ -10956,11 +10956,6 @@ var _user$project$Main$renderFile = function (file) {
 		_elm_lang$html$Html$div,
 		_elm_lang$core$Native_List.fromArray(
 			[
-				_elm_lang$html$Html_Attributes$style(
-				_elm_lang$core$Native_List.fromArray(
-					[
-						{ctor: '_Tuple2', _0: 'display', _1: 'flex'}
-					])),
 				_elm_lang$html$Html_Attributes$classList(
 				_elm_lang$core$Native_List.fromArray(
 					[
@@ -10974,6 +10969,11 @@ var _user$project$Main$renderFile = function (file) {
 				_elm_lang$core$Native_List.fromArray(
 					[
 						_elm_lang$html$Html_Attributes$href(url),
+						_elm_lang$html$Html_Attributes$classList(
+						_elm_lang$core$Native_List.fromArray(
+							[
+								{ctor: '_Tuple2', _0: 'file-row-item', _1: true}
+							])),
 						_elm_lang$html$Html_Attributes$style(
 						_elm_lang$core$Native_List.fromArray(
 							[
@@ -10994,8 +10994,51 @@ var _user$project$Main$renderFile = function (file) {
 								_elm_lang$html$Html_Attributes$classList(classes)
 							]),
 						_elm_lang$core$Native_List.fromArray(
-							[icon])),
-						_elm_lang$html$Html$text(file.shortName)
+							[icon]))
+					])),
+				A2(
+				_elm_lang$html$Html$div,
+				_elm_lang$core$Native_List.fromArray(
+					[]),
+				_elm_lang$core$Native_List.fromArray(
+					[
+						A2(
+						_elm_lang$html$Html$div,
+						_elm_lang$core$Native_List.fromArray(
+							[
+								_elm_lang$html$Html_Attributes$classList(
+								_elm_lang$core$Native_List.fromArray(
+									[
+										{ctor: '_Tuple2', _0: 'file-name', _1: true}
+									]))
+							]),
+						_elm_lang$core$Native_List.fromArray(
+							[
+								A2(
+								_elm_lang$html$Html$a,
+								_elm_lang$core$Native_List.fromArray(
+									[
+										_elm_lang$html$Html_Attributes$href(url)
+									]),
+								_elm_lang$core$Native_List.fromArray(
+									[
+										_elm_lang$html$Html$text(file.shortName)
+									]))
+							])),
+						A2(
+						_elm_lang$html$Html$div,
+						_elm_lang$core$Native_List.fromArray(
+							[
+								_elm_lang$html$Html_Attributes$classList(
+								_elm_lang$core$Native_List.fromArray(
+									[
+										{ctor: '_Tuple2', _0: 'file-details', _1: true}
+									]))
+							]),
+						_elm_lang$core$Native_List.fromArray(
+							[
+								_elm_lang$html$Html$text('some date')
+							]))
 					])),
 				A2(
 				_elm_lang$html$Html$a,
@@ -11004,16 +11047,11 @@ var _user$project$Main$renderFile = function (file) {
 						_user$project$AttributesExtended$voidHref,
 						_elm_lang$html$Html_Events$onClick(
 						_user$project$Main$ShowSharePrompt(file)),
-						_elm_lang$html$Html_Attributes$style(
-						_elm_lang$core$Native_List.fromArray(
-							[
-								{ctor: '_Tuple2', _0: 'margin-left', _1: 'auto'},
-								{ctor: '_Tuple2', _0: 'font-size', _1: '1.75em'}
-							])),
 						_elm_lang$html$Html_Attributes$classList(
 						_elm_lang$core$Native_List.fromArray(
 							[
-								{ctor: '_Tuple2', _0: 'action', _1: true}
+								{ctor: '_Tuple2', _0: 'action', _1: true},
+								{ctor: '_Tuple2', _0: 'file-row-item', _1: true}
 							]))
 					]),
 				_elm_lang$core$Native_List.fromArray(
