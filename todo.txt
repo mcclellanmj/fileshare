@@ -1,9 +1,16 @@
+- Get the view/download links working properly
+- Figure out expiration on shares
+- Add security
 - Add limit to size of response body I parse
+- Clean up the email handling code
 - Make some sort of helper that will take all the statics and auto route them as well as allowing it to dynamically reload in debug builds
 - JSON should be camelcased, probably means I need custom serializers
 - Add handler for downloading shared file
 - Add handler for viewing shared folder, this will also need some kind of frontend
-- Add security
 - Start making some tests
 - Fix the unwraps, particularly in the is_child_of which can error out given any invalid path
 - Find out if the Params function can be made to use &str instead of String
+
+Check in a month:
+- Using the sendmail transport for lettre, this required pulling straight from git.  This should be updated to use a released
+version when its available.

@@ -6,6 +6,7 @@ extern crate rusqlite;
 extern crate uuid;
 extern crate rustc_serialize;
 extern crate hyper;
+extern crate lettre;
 
 mod filetools;
 mod http;

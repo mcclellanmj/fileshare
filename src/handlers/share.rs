@@ -12,6 +12,10 @@ use std::path::{Path,PathBuf};
 use filetools;
 use database::ShareDatabase;
 
+use lettre::email::EmailBuilder;
+use lettre::transport::EmailTransport;
+use lettre::transport::sendmail::SendmailTransport;
+
 use rustc_serialize::json;
 
 #[derive(RustcDecodable, RustcEncodable)]
@@ -38,9 +42,25 @@ impl ShareHandler {
             root_folder: path
         }
     }
+
+    fn send_email(address: &str, link: String) {
+        let email = EmailBuilder::new()
+            .to((address, "Matt McClellan"))
+            .from("mcclellan.mj@gmail.com")
+            .subject("Rust Email")
+            .text(link.as_str())
+            .build()
+            .unwrap();
+
+        let mut sender = SendmailTransport::new();
+        let result = sender.send(email);
+
+        assert!(result.is_ok());
+    }
 }
 
 impl Handler for ShareHandler {
+
     fn handle(&self, req: &mut Request) -> IronResult<Response> {
         let serve_dir = self.root_folder.clone();
 
@@ -70,6 +90,8 @@ impl Handler for ShareHandler {
             let mut request_url = req.url.clone().into_generic_url();
             request_url.set_path("/shared/view");
             request_url.set_query(Some(&format!("hash={}", uuid)));
+
+            ShareHandler::send_email("mcclellan.mj@gmail.com", request_url.clone().into_string());
 
             let response = ShareResponse {
                 uuid: uuid,
