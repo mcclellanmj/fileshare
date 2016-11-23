@@ -19,7 +19,7 @@ use iron::middleware::Chain;
 use iron::{Iron, Request, Response, IronResult};
 use iron::status;
 use router::Router;
-use handlers::{RedirectHandler, ShareHandler, DownloadHandler, FilelistHandler, SharedFilelistHandler};
+use handlers::{RedirectHandler, ShareHandler, DownloadHandler, FilelistHandler, SharedFilelistHandler, ShareDownloadHandler};
 
 use std::path::Path;
 use std::sync::Arc;
@@ -35,6 +35,7 @@ fn main() {
     router.get("/css/app.css", resources::create_css_handler());
     router.get("/view", FilelistHandler::new(root_folder.clone()));
     router.get("/shared/view", SharedFilelistHandler::new(database.clone()));
+    router.get("/shared/download", ShareDownloadHandler::new(database.clone()));
     router.get("/download", DownloadHandler::new(root_folder.clone()));
     router.post("/share", ShareHandler::new(database.clone(), root_folder.clone()));
 

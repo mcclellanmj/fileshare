@@ -17,6 +17,7 @@ pub use self::filelist::SharedFilelistHandler;
 
 mod share;
 pub use self::share::ShareHandler;
+pub use self::share::ShareDownloadHandler;
 
 #[allow(dead_code)]
 pub struct StaticByteHandler {

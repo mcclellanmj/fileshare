@@ -16,6 +16,9 @@ use lettre::email::EmailBuilder;
 use lettre::transport::EmailTransport;
 use lettre::transport::sendmail::SendmailTransport;
 
+use http::headers::download_file_header;
+use http::Params;
+
 use rustc_serialize::json;
 
 #[derive(RustcDecodable, RustcEncodable)]
@@ -88,7 +91,7 @@ impl Handler for ShareHandler {
             let headers = Header(ContentType::json());
 
             let mut request_url = req.url.clone().into_generic_url();
-            request_url.set_path("/shared/view");
+            request_url.set_path("/shared/download");
             request_url.set_query(Some(&format!("hash={}", uuid)));
 
             ShareHandler::send_email("mcclellan.mj@gmail.com", request_url.clone().into_string());
@@ -102,6 +105,37 @@ impl Handler for ShareHandler {
             Ok(Response::with((status::Ok, response_json, headers)))
         } else {
             Ok(Response::with((status::BadRequest, "No valid file found in the filename param, ensure that filename is set on url parameters and that it is a valid file")))
+        }
+    }
+}
+
+pub struct ShareDownloadHandler {
+    database: Arc<ShareDatabase>
+}
+
+impl ShareDownloadHandler {
+    pub fn new(connection: Arc<ShareDatabase>) -> ShareDownloadHandler {
+        ShareDownloadHandler {
+            database: connection
+        }
+    }
+}
+impl Handler for ShareDownloadHandler {
+    fn handle(&self, request: &mut Request) -> IronResult<Response> {
+        let url = request.url.clone().into_generic_url();
+        let params = Params::new(&url);
+
+        let shared = params.get_first_param(&"hash".to_string()).and_then(|hash| {
+            let database = self.database.clone();
+            database.get_shared_by_hash(&hash).map(|ref x| Path::new(x).to_owned())
+        });
+
+        match shared {
+            None => Ok(Response::with((status::BadRequest, "Invalid or Missing the hash"))),
+            Some(shared_path) => {
+                let download_header = Header(download_file_header(shared_path.file_name().unwrap().to_str().unwrap()));
+                Ok(Response::with((status::Ok, shared_path, download_header)))
+            }
         }
     }
 }
