@@ -18,12 +18,14 @@ pub use self::filelist::SharedFilelistHandler;
 mod share;
 pub use self::share::ShareHandler;
 
+#[allow(dead_code)]
 pub struct StaticByteHandler {
     bytes: &'static [u8],
     content_type: ContentType
 }
 
 impl StaticByteHandler {
+    #[allow(dead_code)]
     pub fn new(bytes: &'static [u8], content_type: ContentType) -> StaticByteHandler {
         StaticByteHandler {bytes: bytes, content_type: content_type}
     }
