@@ -1,6 +1,7 @@
 #![deny(warnings)]
 #[macro_use]
 extern crate iron;
+extern crate iron_sessionstorage;
 extern crate router;
 extern crate url;
 extern crate rusqlite;
@@ -24,6 +25,32 @@ use handlers::{RedirectHandler, ShareHandler, DownloadHandler, FilelistHandler, 
 
 use std::path::Path;
 use std::sync::Arc;
+
+// use iron_sessionstorage::traits::*;
+// use iron_sessionstorage::SessionStorage;
+// use iron_sessionstorage::backends::SignedCookieBackend;
+
+struct Login {
+    login_time: time::Tm
+}
+
+impl iron_sessionstorage::Value for Login {
+    fn get_key() -> &'static str {
+        "login_time"
+    }
+
+    fn into_raw(self) -> String {
+        time::strftime("%s", &self.login_time).unwrap()
+    }
+
+    fn from_raw(value: String) -> Option<Self> {
+        if value.is_empty() {
+            None
+        } else {
+            time::strptime(&value, "%s").ok().map(|x| Login {login_time: x})
+        }
+    }
+}
 
 fn main() {
     let mut router = Router::new();    
