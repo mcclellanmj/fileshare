@@ -14,7 +14,9 @@ use std::cmp::Ord;
 
 use filetools;
 use http::Params;
+
 use database::ShareDatabase;
+use database::ShareResult::*;
 
 use rustc_serialize::json;
 
@@ -108,31 +110,34 @@ impl Handler for SharedFilelistHandler {
         let params = Params::new(&url);
 
         // Get the shared parameter and fetch it from the database
-        let shared = params.get_first_param(&"hash".to_string()).and_then(|hash| {
+        if let Some(hash) = params.get_first_param(&"hash".to_string()) {
             let database = self.database.clone();
-            database.get_shared_by_hash(&hash).map(|ref x| Path::new(x).to_owned())
-        });
 
-        // Get the path the user selected or else use the path of the shared file
-        let path = params.get_first_param(&"folder_path".to_string())
-            .map(|x| Path::new(&x).to_owned())
-            .or(shared.clone());
+            match database.get_shared_by_hash(&hash) {
+                Missing => Ok(Response::with((status::BadRequest, "Invalid hash"))),
+                Expired => Ok(Response::with((status::BadRequest, "Share has expired"))),
+                Valid(ref x) => {
+                    let shared_path = Path::new(x).to_owned();
+                    let path = params.get_first_param(&"folder_path".to_string())
+                        .map(|y| Path::new(&y).to_owned())
+                        .or(Some(shared_path.clone()));
 
-        match shared {
-            None => Ok(Response::with((status::BadRequest, "Invalid or Missing the hash"))),
-            Some(shared_path) => {
-                let folder = path.unwrap();
-                if filetools::is_child_of(&shared_path, &folder) {
-                    if folder.is_dir() {
-                        let headers = Header(ContentType::json());
-                        Ok(Response::with((status::Ok, json_folder_listing(&folder), headers)))
+                    let folder = path.unwrap();
+
+                    if filetools::is_child_of(&shared_path, &folder) {
+                        if folder.is_dir() {
+                            let headers = Header(ContentType::json());
+                            Ok(Response::with((status::Ok, json_folder_listing(&folder), headers)))
+                        } else {
+                            Ok(Response::with((status::BadRequest, "Shared resource is not a directory")))
+                        }
                     } else {
-                        Ok(Response::with((status::BadRequest, "Shared resource is not a directory")))
+                        Ok(Response::with((status::BadRequest, "Cannot access files outside of shared directory")))
                     }
-                } else {
-                    Ok(Response::with((status::BadRequest, "Cannot access files outside of shared directory")))
                 }
             }
+        } else {
+            Ok(Response::with((status::BadRequest, "Invalid or Missing the hash")))
         }
     }
 }

@@ -8,6 +8,7 @@ extern crate uuid;
 extern crate rustc_serialize;
 extern crate hyper;
 extern crate lettre;
+extern crate time;
 
 mod filetools;
 mod http;

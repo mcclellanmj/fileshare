@@ -3,8 +3,17 @@ use rusqlite::types::ToSql;
 
 use std::sync::{Arc, Mutex};
 
+use time;
+use time::Duration;
+
 pub struct ShareDatabase {
     connection: Arc<Mutex<Connection>>
+}
+
+pub enum ShareResult<T> {
+    Missing,
+    Expired,
+    Valid(T)
 }
 
 impl ShareDatabase {
@@ -15,9 +24,10 @@ impl ShareDatabase {
             let table_exists = stmt.exists(&[]).unwrap();
 
             if !table_exists {
-                connection.execute("CREATE TABLE shared_files(
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    hash CHAR(36) UNIQUE,
+                connection.execute("CREATE TABLE shared_files(\
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,\
+                    hash CHAR(36) NOT NULL UNIQUE,\
+                    expiration TIMESTAMP NOT NULL,\
                     path VARCHAR(32768))", &[]).unwrap();
 
                 connection.execute("CREATE UNIQUE INDEX shared_files_hash_index on shared_files (hash)", &[]).unwrap();
@@ -29,22 +39,30 @@ impl ShareDatabase {
         }
     }
 
-    pub fn get_shared_by_hash<T: ToSql>(&self, hash: &T) -> Option<String> {
+    pub fn get_shared_by_hash<T: ToSql>(&self, hash: &T) -> ShareResult<String> {
         let connection = self.connection.lock().unwrap();
 
-        let mut stmt = connection.prepare("SELECT path FROM shared_files WHERE hash=:hash").unwrap();
+        let mut stmt = connection.prepare("SELECT path, expiration FROM shared_files WHERE hash=:hash").unwrap();
         let mut rows = stmt.query_named(&[(":hash", hash)]).unwrap();
 
         if let Some(r) = rows.next() {
             let result = r.unwrap();
-            result.get(0)
+            let expiration : time::Timespec = result.get(1);
+
+            if expiration >= time::get_time() {
+                ShareResult::Valid(result.get(0))
+            } else {
+                ShareResult::Expired
+            }
         } else {
-            None
+            ShareResult::Missing
         }
     }
 
     pub fn add_shared_file<T: ToSql>(&self, hash: &T, filepath: &T) -> i32 {
         let connection = self.connection.lock().unwrap();
-        connection.execute_named("INSERT INTO shared_files(hash, path) VALUES (:hash, :path)", &[(":hash", hash), (":path", filepath)]).unwrap()
+        let expiration = time::get_time() + Duration::days(7);
+
+        connection.execute_named("INSERT INTO shared_files(hash, path, expiration) VALUES (:hash, :path, :expiration)", &[(":hash", hash), (":path", filepath), (":expiration", &expiration)]).unwrap()
     }
 }

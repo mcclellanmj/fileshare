@@ -11,6 +11,7 @@ use std::path::{Path,PathBuf};
 
 use filetools;
 use database::ShareDatabase;
+use database::ShareResult::*;
 
 use lettre::email::EmailBuilder;
 use lettre::transport::EmailTransport;
@@ -85,7 +86,7 @@ impl Handler for ShareHandler {
             let uuid = Uuid::new_v4().simple().to_string();
             let filepath = filetools::make_string(&f);
 
-            let num_rows_added = self.connection.add_shared_file(&uuid, &String::from(filepath));
+            let num_rows_added = self.connection.add_shared_file(&uuid, &filepath.to_string());
             println!("Shared file [{}] with uuid [{}] and added [{}] rows to database", filepath, uuid, num_rows_added);
 
             let headers = Header(ContentType::json());
@@ -125,17 +126,20 @@ impl Handler for ShareDownloadHandler {
         let url = request.url.clone().into_generic_url();
         let params = Params::new(&url);
 
-        let shared = params.get_first_param(&"hash".to_string()).and_then(|hash| {
+        if let Some(hash) = params.get_first_param(&"hash".to_string()) {
             let database = self.database.clone();
-            database.get_shared_by_hash(&hash).map(|ref x| Path::new(x).to_owned())
-        });
 
-        match shared {
-            None => Ok(Response::with((status::BadRequest, "Invalid or Missing the hash"))),
-            Some(shared_path) => {
-                let download_header = Header(download_file_header(shared_path.file_name().unwrap().to_str().unwrap()));
-                Ok(Response::with((status::Ok, shared_path, download_header)))
+            match database.get_shared_by_hash(&hash) {
+                Missing => Ok(Response::with((status::BadRequest, "No shared file with this hash"))),
+                Expired => Ok(Response::with((status::BadRequest, "Share has expired"))),
+                Valid(ref x) => {
+                    let shared_path = Path::new(x).to_owned();
+                    let download_header = Header(download_file_header(shared_path.file_name().unwrap().to_str().unwrap()));
+                    Ok(Response::with((status::Ok, shared_path, download_header)))
+                }
             }
+        } else {
+            Ok(Response::with((status::BadRequest, "Missing the hash query parameter")))
         }
     }
 }
