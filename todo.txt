@@ -1,4 +1,6 @@
 - Add security
+  - In progress, need to fix the redirect
+  - Move Login struct to somewhere else?
 - Add limit to size of response body I parse
 - The emailer service and other aspects should be configurable
 - JSON should be camelcased, probably means I need custom serializers

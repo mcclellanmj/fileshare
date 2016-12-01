@@ -16,6 +16,7 @@ mod http;
 mod handlers;
 mod database;
 mod resources;
+mod authorization;
 
 use iron::middleware::Chain;
 use iron::{Iron, Request, Response, IronResult};
@@ -27,8 +28,8 @@ use std::path::Path;
 use std::sync::Arc;
 
 // use iron_sessionstorage::traits::*;
-// use iron_sessionstorage::SessionStorage;
-// use iron_sessionstorage::backends::SignedCookieBackend;
+use iron_sessionstorage::SessionStorage;
+use iron_sessionstorage::backends::SignedCookieBackend;
 
 struct Login {
     login_time: time::Tm
@@ -71,6 +72,8 @@ fn main() {
         Ok(Response::with((status::Ok, Path::new("elm.js"))))
     }
 
-    let request_chain = Chain::new(router);
+    let mut request_chain = Chain::new(router);
+    request_chain.link_around(SessionStorage::new(SignedCookieBackend::new(b"NotASecret".to_vec())));
+    request_chain.link_before(authorization::AuthorizationMiddleware::new("test".to_string()));
     Iron::new(request_chain).http("localhost:3000").unwrap();
 }
