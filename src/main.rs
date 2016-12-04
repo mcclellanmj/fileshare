@@ -19,7 +19,7 @@ mod resources;
 mod authorization;
 
 use iron::middleware::Chain;
-use iron::{Iron, Request, Response, IronResult};
+use iron::{Iron, Handler, Request, Response, IronResult};
 use iron::status;
 use router::Router;
 use handlers::{RedirectHandler, ShareHandler, DownloadHandler, FilelistHandler, SharedFilelistHandler, ShareDownloadHandler};
@@ -53,6 +53,12 @@ impl iron_sessionstorage::Value for Login {
     }
 }
 
+fn secured<H: Handler> (handler: H) -> Chain {
+    let mut chain = Chain::new(handler);
+    chain.link_before(authorization::AuthorizationMiddleware::new());
+    chain
+}
+
 fn main() {
     let mut router = Router::new();    
     let database = Arc::new(database::ShareDatabase::new("data.sql"));
@@ -60,13 +66,16 @@ fn main() {
 
     router.get("/js/elm.js", frontend);
     router.get("/", RedirectHandler::new("index.html"));
-    router.get("/index.html", resources::create_index_handler());
     router.get("/css/app.css", resources::create_css_handler());
-    router.get("/view", FilelistHandler::new(root_folder.clone()));
     router.get("/shared/view", SharedFilelistHandler::new(database.clone()));
     router.get("/shared/download", ShareDownloadHandler::new(database.clone()));
-    router.get("/download", DownloadHandler::new(root_folder.clone()));
-    router.post("/share", ShareHandler::new(database.clone(), root_folder.clone()));
+    router.get("login.html", resources::create_login_handler());
+
+    // Secured resources
+    router.get("/index.html", secured(resources::create_index_handler()));
+    router.get("/view", secured(FilelistHandler::new(root_folder.clone())));
+    router.get("/download", secured(DownloadHandler::new(root_folder.clone())));
+    router.post("/share", secured(ShareHandler::new(database.clone(), root_folder.clone())));
 
     fn frontend(_: &mut Request) -> IronResult<Response> {
         Ok(Response::with((status::Ok, Path::new("elm.js"))))
@@ -74,6 +83,6 @@ fn main() {
 
     let mut request_chain = Chain::new(router);
     request_chain.link_around(SessionStorage::new(SignedCookieBackend::new(b"NotASecret".to_vec())));
-    request_chain.link_before(authorization::AuthorizationMiddleware::new("test".to_string()));
+
     Iron::new(request_chain).http("localhost:3000").unwrap();
 }
