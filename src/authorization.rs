@@ -21,7 +21,7 @@ impl BeforeMiddleware for AuthorizationMiddleware {
     fn before(&self, req: &mut Request) -> IronResult<()> {
         let result = try!(req.session().get::<Login>()).is_some();
         let generic_url = req.url.clone().into_generic_url();
-        let mut query = percent_encoding::utf8_percent_encode(
+        let query = percent_encoding::utf8_percent_encode(
             generic_url.as_str(),
             percent_encoding::QUERY_ENCODE_SET);
 

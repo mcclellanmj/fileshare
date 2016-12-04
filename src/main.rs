@@ -19,10 +19,11 @@ mod resources;
 mod authorization;
 
 use iron::middleware::Chain;
-use iron::{Iron, Handler, Request, Response, IronResult};
-use iron::status;
+use iron::{Iron, Handler};
 use router::Router;
-use handlers::{RedirectHandler, ShareHandler, DownloadHandler, FilelistHandler, SharedFilelistHandler, ShareDownloadHandler};
+use handlers::{RedirectHandler, ShareHandler, SingleFileHandler, DownloadHandler, FilelistHandler, SharedFilelistHandler, ShareDownloadHandler};
+use hyper::header::ContentType as HyperContent;
+use hyper::mime::{Mime, TopLevel, SubLevel, Attr, Value};
 
 use std::path::Path;
 use std::sync::Arc;
@@ -59,27 +60,28 @@ fn secured<H: Handler> (handler: H) -> Chain {
     chain
 }
 
+fn js_content_type() -> HyperContent {
+    HyperContent(Mime(TopLevel::Text, SubLevel::Javascript, vec![(Attr::Charset, Value::Utf8)]))
+}
+
 fn main() {
     let mut router = Router::new();    
     let database = Arc::new(database::ShareDatabase::new("data.sql"));
     let root_folder = Arc::new(Path::new(".").canonicalize().unwrap());
 
-    router.get("/js/elm.js", frontend);
+    // Unsecured resources
+    router.get("/js/elm.js", SingleFileHandler::new(Path::new("elm.js").to_owned(), js_content_type()));
     router.get("/", RedirectHandler::new("index.html"));
     router.get("/css/app.css", resources::create_css_handler());
     router.get("/shared/view", SharedFilelistHandler::new(database.clone()));
     router.get("/shared/download", ShareDownloadHandler::new(database.clone()));
-    router.get("login.html", resources::create_login_handler());
+    router.get("/login.html", resources::create_login_handler());
 
     // Secured resources
     router.get("/index.html", secured(resources::create_index_handler()));
     router.get("/view", secured(FilelistHandler::new(root_folder.clone())));
     router.get("/download", secured(DownloadHandler::new(root_folder.clone())));
     router.post("/share", secured(ShareHandler::new(database.clone(), root_folder.clone())));
-
-    fn frontend(_: &mut Request) -> IronResult<Response> {
-        Ok(Response::with((status::Ok, Path::new("elm.js"))))
-    }
 
     let mut request_chain = Chain::new(router);
     request_chain.link_around(SessionStorage::new(SignedCookieBackend::new(b"NotASecret".to_vec())));
