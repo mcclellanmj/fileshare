@@ -19,11 +19,12 @@ mod resources;
 mod authorization;
 
 use iron::middleware::Chain;
-use iron::{Iron, Handler};
+use iron::Iron;
 use router::Router;
 use handlers::{RedirectHandler, ShareHandler, SingleFileHandler, DownloadHandler, FilelistHandler, SharedFilelistHandler, ShareDownloadHandler};
 use hyper::header::ContentType as HyperContent;
 use hyper::mime::{Mime, TopLevel, SubLevel, Attr, Value};
+use authorization::secured_handler;
 
 use std::path::Path;
 use std::sync::Arc;
@@ -31,34 +32,6 @@ use std::sync::Arc;
 // use iron_sessionstorage::traits::*;
 use iron_sessionstorage::SessionStorage;
 use iron_sessionstorage::backends::SignedCookieBackend;
-
-struct Login {
-    login_time: time::Tm
-}
-
-impl iron_sessionstorage::Value for Login {
-    fn get_key() -> &'static str {
-        "login_time"
-    }
-
-    fn into_raw(self) -> String {
-        time::strftime("%s", &self.login_time).unwrap()
-    }
-
-    fn from_raw(value: String) -> Option<Self> {
-        if value.is_empty() {
-            None
-        } else {
-            time::strptime(&value, "%s").ok().map(|x| Login {login_time: x})
-        }
-    }
-}
-
-fn secured<H: Handler> (handler: H) -> Chain {
-    let mut chain = Chain::new(handler);
-    chain.link_before(authorization::AuthorizationMiddleware::new());
-    chain
-}
 
 fn js_content_type() -> HyperContent {
     HyperContent(Mime(TopLevel::Text, SubLevel::Javascript, vec![(Attr::Charset, Value::Utf8)]))
@@ -78,10 +51,10 @@ fn main() {
     router.get("/login.html", resources::create_login_handler());
 
     // Secured resources
-    router.get("/index.html", secured(resources::create_index_handler()));
-    router.get("/view", secured(FilelistHandler::new(root_folder.clone())));
-    router.get("/download", secured(DownloadHandler::new(root_folder.clone())));
-    router.post("/share", secured(ShareHandler::new(database.clone(), root_folder.clone())));
+    router.get("/index.html", secured_handler(resources::create_index_handler()));
+    router.get("/view", secured_handler(FilelistHandler::new(root_folder.clone())));
+    router.get("/download", secured_handler(DownloadHandler::new(root_folder.clone())));
+    router.post("/share", secured_handler(ShareHandler::new(database.clone(), root_folder.clone())));
 
     let mut request_chain = Chain::new(router);
     request_chain.link_around(SessionStorage::new(SignedCookieBackend::new(b"NotASecret".to_vec())));
