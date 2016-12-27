@@ -19,6 +19,10 @@ mod share;
 pub use self::share::ShareHandler;
 pub use self::share::ShareDownloadHandler;
 
+mod login;
+pub use self::login::LoginFormHandler;
+pub use self::login::AuthenticateHandler;
+
 #[allow(dead_code)]
 pub struct StaticByteHandler {
     bytes: &'static [u8],

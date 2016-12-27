@@ -14,3 +14,5 @@ rustc-serialize = "0.3"
 uuid = { version = "0.3", features = ["v4"] }
 lettre = { git = "https://github.com/lettre/lettre.git" }
 time = "0.1"
+liquid = "0.9"
+params = "0.5"

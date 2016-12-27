@@ -10,6 +10,8 @@ extern crate rustc_serialize;
 extern crate hyper;
 extern crate lettre;
 extern crate time;
+extern crate liquid;
+extern crate params;
 
 mod filetools;
 mod http;
@@ -21,7 +23,7 @@ mod authorization;
 use iron::middleware::Chain;
 use iron::Iron;
 use router::Router;
-use handlers::{RedirectHandler, ShareHandler, SingleFileHandler, DownloadHandler, FilelistHandler, SharedFilelistHandler, ShareDownloadHandler};
+use handlers::{AuthenticateHandler, RedirectHandler, ShareHandler, SingleFileHandler, DownloadHandler, FilelistHandler, SharedFilelistHandler, ShareDownloadHandler, LoginFormHandler};
 use hyper::header::ContentType as HyperContent;
 use hyper::mime::{Mime, TopLevel, SubLevel, Attr, Value};
 use authorization::secured_handler;
@@ -48,7 +50,8 @@ fn main() {
     router.get("/css/app.css", resources::create_css_handler());
     router.get("/shared/view", SharedFilelistHandler::new(database.clone()));
     router.get("/shared/download", ShareDownloadHandler::new(database.clone()));
-    router.get("/login.html", resources::create_login_handler());
+    router.get("/login.html", LoginFormHandler::new());
+    router.post("/do_login.html", AuthenticateHandler::new("matt", "nopass"));
 
     // Secured resources
     router.get("/index.html", secured_handler(resources::create_index_handler()));
