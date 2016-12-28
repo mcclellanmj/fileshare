@@ -3,15 +3,22 @@ use liquid::{Renderable, LiquidOptions, Context, Value};
 
 use iron::{Request, Response, IronResult};
 use iron::middleware::Handler;
-use iron::modifiers::Header;
+use iron::modifiers::{Header, RedirectRaw};
 use iron::headers::ContentType;
 use iron::status;
 use iron::prelude::Plugin;
 
+use iron_sessionstorage::SessionRequestExt;
+
 use resources;
 use http::Params;
+use authorization::Login;
+
 use params::Params as IronParams;
 use params::Value as ParamValue;
+
+use std::borrow::Cow;
+use time;
 
 pub struct LoginFormHandler;
 
@@ -50,9 +57,9 @@ impl AuthenticateHandler {
         AuthenticateHandler {username : username.into(), password : password.into()}
     }
 
-    fn value_to_string(value: &ParamValue) -> Option<String> {
+    fn value_to_string<'a>(value: &'a ParamValue) -> Option<Cow<'a, str>> {
         match value {
-            &ParamValue::String(ref v) => Some(v.clone()),
+            &ParamValue::String(ref v) => Some(Cow::from(v.as_str())),
             _ => None
         }
     }
@@ -60,39 +67,51 @@ impl AuthenticateHandler {
 
 #[derive(Debug)]
 pub enum AuthenticationStatus {
-    Authenticated,
+    Authenticated(String),
     InvalidCredentials,
     MissingFormParams
 }
 
 impl Handler for AuthenticateHandler {
     fn handle(&self, req: &mut Request) -> IronResult<Response> {
-        let params = req.get_ref::<IronParams>();
-        println!("Password is {}, username is {}", self.username, self.password);
+        let authenticated_status = {
+            let params = req.get_ref::<IronParams>();
 
-        let authenticated_status = if let Ok(map) = params {
-            let ref btree = *map;
-            let credentials = btree.get("username")
-                .and_then(AuthenticateHandler::value_to_string)
-                .and_then(|u| btree.get("password")
+            if let Ok(map) = params {
+                let ref btree = *map;
+                let credentials = btree.get("username")
                     .and_then(AuthenticateHandler::value_to_string)
-                    .map(|p| (u,p)));
+                    .and_then(|u| btree.get("password")
+                        .and_then(AuthenticateHandler::value_to_string)
+                        .map(|p| (u, p)));
 
-            if let Some((username, password)) = credentials {
-                if self.username == username && self.password == password {
-                    AuthenticationStatus::Authenticated
+                if let Some((username, password)) = credentials {
+                    if self.username == username && self.password == password {
+                        let redirect = btree.get("success_redirect")
+                            .and_then(AuthenticateHandler::value_to_string)
+                            .unwrap_or("/".into());
+
+                        AuthenticationStatus::Authenticated(String::from(redirect))
+                    } else {
+                        AuthenticationStatus::InvalidCredentials
+                    }
                 } else {
-                    AuthenticationStatus::InvalidCredentials
+                    AuthenticationStatus::MissingFormParams
                 }
             } else {
                 AuthenticationStatus::MissingFormParams
             }
-        } else {
-            AuthenticationStatus::MissingFormParams
         };
 
         match authenticated_status {
-            AuthenticationStatus::Authenticated => Ok(Response::with(format!("{:?}", params))),
+            AuthenticationStatus::Authenticated(redirect) => {
+                // TODO: Figure out a reusable way to handle errors, probably
+                // redirect to some error handler
+                req.session().set(Login::new(time::now())).unwrap();
+
+                let response = (status::Found, RedirectRaw(String::from(redirect)));
+                Ok(Response::with(response))
+            },
             _ => Ok(Response::with(format!("not authenticated, {:?}", authenticated_status)))
         }
     }

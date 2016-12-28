@@ -12,9 +12,16 @@ use iron::Handler;
 use iron_sessionstorage;
 
 use time;
+use time::Tm;
 
-struct Login {
+pub struct Login {
     login_time: time::Tm
+}
+
+impl Login {
+    pub fn new(time: Tm) -> Login {
+        Login { login_time: time}
+    }
 }
 
 impl iron_sessionstorage::Value for Login {
