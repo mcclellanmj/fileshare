@@ -60,7 +60,7 @@ fn main() {
     router.post("/share", secured_handler(ShareHandler::new(database.clone(), root_folder.clone())));
 
     let mut request_chain = Chain::new(router);
-    request_chain.link_around(SessionStorage::new(SignedCookieBackend::new(b"NotASecret1".to_vec())));
+    request_chain.link_around(SessionStorage::new(SignedCookieBackend::new(b"NotASecret".to_vec())));
 
     Iron::new(request_chain).http("localhost:3000").unwrap();
 }

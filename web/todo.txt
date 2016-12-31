@@ -1,0 +1,15 @@
+- De-spaghetti the code base
+- Fix up the share window
+  - Add number of days to share behavior
+    - This is probably not necessary, just always expire in 7 days
+- Intercept the back button push and if a prompt is active close it and don't do the back
+  - There's no intercepting this, likely need to get creative with the paths
+- Add an upload function
+- Investigate putting Files into a new Module, like FolderView which has its own set of messages
+- It'd be nice if the Loading text had a delay
+  - It'd be even nicer if it was centered
+    - And it'd be even more nicer if it was a progress bar
+- Add the windows for sharing and menus
+- Make the title bar stick to the top
+- Can we animate parts of this?
+  - First thing that comes to mind is animate the loading bar to give it a gradual fade in, it feels jarring right now

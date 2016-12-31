@@ -1,11 +1,8 @@
-- Add security
-  - In progress, need to fix the redirect
-  - Move Login struct to somewhere else?
 - Add limit to size of response body I parse
+- Fix the unwraps, particularly in the is_child_of which can error out given any invalid path
 - The emailer service and other aspects should be configurable
 - JSON should be camelcased, probably means I need custom serializers
 - Start making some tests
-- Fix the unwraps, particularly in the is_child_of which can error out given any invalid path
 - Find out if the Params function can be made to use &str instead of String
 - Add handler for viewing shared folder, this will also need some kind of frontend
 

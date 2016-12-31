@@ -2,3 +2,5 @@ target
 personal-file-share.iml
 .idea
 Cargo.lock
+data.sql
+elm.js
