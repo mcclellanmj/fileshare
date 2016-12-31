@@ -1,4 +1,6 @@
 'use strict';
 require('./index.html');
-var Elm = require('./Main');
+require('./stylesheet/Stylesheets');
+
+var Elm = require('./src/Main');
 Elm.Main.embed(document.getElementById('main'));

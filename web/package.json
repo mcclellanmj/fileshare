@@ -1,0 +1,16 @@
+{
+  "name": "personal-fileshare",
+  "version": "1.0.0",
+  "description": "Personal Fileshare",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {
+    "extract-text-webpack-plugin": "^1.0.1",
+    "webpack": "^1.14.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}

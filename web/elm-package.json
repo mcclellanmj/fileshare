@@ -4,7 +4,8 @@
     "repository": "https://github.com/user/project.git",
     "license": "BSD3",
     "source-directories": [
-        "src"
+        "src",
+        "stylesheet"
     ],
     "exposed-modules": [],
     "dependencies": {
@@ -16,7 +17,9 @@
         "evancz/elm-http": "3.0.0 <= v < 3.1.0",
         "elm-community/string-extra": "1.0.0 <= v < 1.1.0",
         "benthepoet/elm-purecss": "1.0.1 <= v < 1.1.0",
-        "Fresheyeball/elm-font-awesome": "2.0.0 <= v < 2.1.0"
+        "Fresheyeball/elm-font-awesome": "2.0.0 <= v < 2.1.0",
+        "rtfeldman/elm-css": "6.0.0 <= v < 6.1.0",
+        "rtfeldman/elm-css-helpers": "2.0.0 <= v < 3.0.0"
     },
     "elm-version": "0.17.0 <= v < 0.18.0"
 }
