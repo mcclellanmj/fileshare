@@ -53,3 +53,10 @@ gulp.task('combine-css', ['compile-elm-css', 'copy-third-party-css'], function()
 });
 
 gulp.task('build', ['combine-css', 'combine-js'])
+
+gulp.task('default', function() {
+  gulp.run('build');
+
+  gulp.watch(['src/**/*'], function() {gulp.run('combine-js')});
+  gulp.watch(['stylesheet/**/*'], function() {gulp.run('combine-css')});
+});
