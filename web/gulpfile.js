@@ -6,6 +6,7 @@ var concat = require('gulp-concat');
 var minifyCSS = require('gulp-minify-css');
 var uglify = require('gulp-uglify');
 var rename = require('gulp-rename');
+var fontgen = require('gulp-fontgen');
 
 gulp.task('elm-init', elm.init);
 
@@ -38,8 +39,19 @@ gulp.task('copy-third-party-css', function() {
     ]).pipe(gulp.dest('build/css'));
 });
 
-gulp.task('copy-fonts', function() {
+gulp.task('copy-third-party-fonts', function() {
   return gulp.src(['bower_components/font-awesome/fonts/*']).pipe(gulp.dest('dist/fonts'));
+});
+
+gulp.task('create-all-fonts', function() {
+  return gulp.src('fonts/*').pipe(fontgen(
+    { dest: 'dist/fonts'
+    , css: 'build/css/generated_fonts.css'
+    , css_fontpath: '../'}));
+});
+
+gulp.task('fonts', ['copy-third-party-fonts', 'create-all-fonts'], function() {
+  return gulp.src('build/*.{eot,svg,ttf,woff,woff2}').pipe(gulp.dest('dist/fonts'));
 });
 
 gulp.task('combine-js', ['compile-elm'], function() {
@@ -49,14 +61,14 @@ gulp.task('combine-js', ['compile-elm'], function() {
     .pipe(gulp.dest('dist'))
 });
 
-gulp.task('combine-css', ['compile-elm-css', 'copy-third-party-css'], function() {
+gulp.task('combine-css', ['compile-elm-css', 'copy-third-party-css', 'create-all-fonts'], function() {
   return gulp.src('build/css/**/*.css')
     .pipe(minifyCSS())
     .pipe(concat('app.min.css'))
     .pipe(gulp.dest('dist'))
 });
 
-gulp.task('build', ['combine-css', 'combine-js', 'copy-fonts'])
+gulp.task('build', ['combine-css', 'combine-js', 'fonts'])
 
 gulp.task('default', function() {
   gulp.run('build');
