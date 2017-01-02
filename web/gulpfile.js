@@ -38,6 +38,10 @@ gulp.task('copy-third-party-css', function() {
     ]).pipe(gulp.dest('build/css'));
 });
 
+gulp.task('copy-fonts', function() {
+  return gulp.src(['bower_components/font-awesome/fonts/*']).pipe(gulp.dest('dist/fonts'));
+});
+
 gulp.task('combine-js', ['compile-elm'], function() {
   return gulp.src('build/js/**/*.js')
     .pipe(concat('app.min.js'))
@@ -52,7 +56,7 @@ gulp.task('combine-css', ['compile-elm-css', 'copy-third-party-css'], function()
     .pipe(gulp.dest('dist'))
 });
 
-gulp.task('build', ['combine-css', 'combine-js'])
+gulp.task('build', ['combine-css', 'combine-js', 'copy-fonts'])
 
 gulp.task('default', function() {
   gulp.run('build');
