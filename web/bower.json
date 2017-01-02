@@ -1,0 +1,23 @@
+{
+  "name": "personal-fileshare",
+  "description": "Personal Fileshare",
+  "main": "index.js",
+  "authors": [
+    "Matt McClellan <mcclellan.mj@gmail.com>"
+  ],
+  "license": "ISC",
+  "homepage": "https://github.com/mcclellanmj/fileshare",
+  "moduleType": [],
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "pure": "^0.6.1",
+    "font-awesome": "fontawesome#^4.7.0"
+  }
+}

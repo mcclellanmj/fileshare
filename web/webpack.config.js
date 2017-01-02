@@ -1,11 +1,10 @@
-var ExtractTextPlugin = require("extract-text-webpack-plugin");
+var path = require('path');
 
 module.exports = {
   entry: './index.js',
   output: {
     path: './dist',
-    filename: 'index.js',
-    chunkFilename: '[id].js'
+    filename: 'index.js'
   },
   resolve: {
     modulesDirectories: ['node_modules'],
@@ -19,21 +18,19 @@ module.exports = {
         loader: 'file-loader?name=[name].[ext]'
       },
       {
-        test: /.elm$/,
+        test: /.\/src\/.*elm$/,
         exclude: [/elm-stuff/, /node_modules/],
         loader: 'elm-webpack'
       },
       {
-        test: /stylesheets\/.*elm$/,
-        loader: ExtractTextPlugin.extract('style-loader', 'css-loader!elm-css-webpack')
+        test: /.\/stylesheet\/.*elm$/,
+        loader: 'file-loader?name=base.css!elm-css-webpack'
       }
     ],
-
     noParse: /\.elm$/
   },
-  plugins: [ new ExtractTextPlugin("main.css") ],
+  stats: { colors: true },
   devServer: {
-    inline: true,
     stats: 'errors-only'
   }
 };
