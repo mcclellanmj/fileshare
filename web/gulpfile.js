@@ -6,7 +6,6 @@ var concat = require('gulp-concat');
 var minifyCSS = require('gulp-minify-css');
 var uglify = require('gulp-uglify');
 var rename = require('gulp-rename');
-var fontgen = require('gulp-fontgen');
 
 gulp.task('elm-init', elm.init);
 
@@ -34,45 +33,34 @@ gulp.task('compile-elm-css', function() {
 
 gulp.task('copy-third-party-css', function() {
   return gulp.src(
-    [ 'bower_components/font-awesome/css/font-awesome.css'
-    , 'bower_components/pure/pure.css'
+    [ 'bower_components/pure/pure.css'
     ]).pipe(gulp.dest('build/css'));
 });
 
-gulp.task('copy-third-party-fonts', function() {
-  return gulp.src(['bower_components/font-awesome/fonts/*']).pipe(gulp.dest('dist/fonts'));
-});
-
-gulp.task('create-all-fonts', function() {
-  return gulp.src('fonts/*').pipe(fontgen(
-    { dest: 'dist/fonts'
-    , css: 'build/css/generated_fonts.css'
-    , css_fontpath: '../'}));
-});
-
-gulp.task('fonts', ['copy-third-party-fonts', 'create-all-fonts'], function() {
-  return gulp.src('build/*.{eot,svg,ttf,woff,woff2}').pipe(gulp.dest('dist/fonts'));
-});
-
-gulp.task('combine-js', ['compile-elm'], function() {
+gulp.task('js', ['compile-elm'], function() {
   return gulp.src('build/js/**/*.js')
     .pipe(concat('app.min.js'))
     .pipe(uglify())
-    .pipe(gulp.dest('dist'))
+    .pipe(gulp.dest('dist'));
 });
 
-gulp.task('combine-css', ['compile-elm-css', 'copy-third-party-css', 'create-all-fonts'], function() {
+gulp.task('css', ['compile-elm-css', 'copy-third-party-css'], function() {
   return gulp.src('build/css/**/*.css')
     .pipe(minifyCSS())
     .pipe(concat('app.min.css'))
-    .pipe(gulp.dest('dist'))
+    .pipe(gulp.dest('dist'));
 });
 
-gulp.task('build', ['combine-css', 'combine-js', 'fonts'])
+gulp.task('html', [], function() {
+  return gulp.src('index.html').pipe(gulp.dest('dist'));
+});
+
+gulp.task('build', ['css', 'js', 'html'])
 
 gulp.task('default', function() {
   gulp.run('build');
 
-  gulp.watch(['src/**/*'], function() {gulp.run('combine-js')});
-  gulp.watch(['stylesheet/**/*'], function() {gulp.run('combine-css')});
+  gulp.watch(['index.html'], function() {gulp.run('html')});
+  gulp.watch(['src/**/*'], function() {gulp.run('js')});
+  gulp.watch(['stylesheet/**/*', 'fonts/**/*'], function() {gulp.run('css')});
 });
