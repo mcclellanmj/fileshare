@@ -12,6 +12,7 @@ import AddressableStates exposing (AddressableState(..))
 import AttributesExtended
 import SharePrompt
 import FontAwesome.Web as FontAwesome
+import Css exposing (withClass, withClasses, CssClass(..), withId, Id(..))
 
 -- Model
 type Files
@@ -125,10 +126,10 @@ renderFile file =
         (Http.url "/download" [("filename", file.fullPath)], FontAwesome.sticky_note, [ ("file-icon", True), ("type-icon", True) ])
   in
     div
-      [ classList [("file-row", True)] ]
+      [ withClass FileRow ]
       [ a
         [ href url
-        , classList [("file-row-item", True)]
+        , withClass FileRowItem
         , style [ ("font-size", "1.75em") ]
         ]
         [ span
@@ -138,14 +139,14 @@ renderFile file =
           [ icon ]
         ]
       , div
-        [ classList [("file-holder", True)] ]
-        [ div [ classList [("file-name", True)] ] [ a [href url] [text file.shortName] ]
-        , div [ classList [("file-details", True)] ] [ text "some date" ]
+        [ withClass FileHolder ]
+        [ div [ withClass FileName ] [ a [href url] [text file.shortName] ]
+        , div [ withClass FileDetails ] [ text "some date" ]
         ]
       , if file.isFolder == False then
           a [ AttributesExtended.voidHref
             , onClick (ShowSharePrompt file)
-            , classList [ ("action", True), ("file-row-item", True) ]
+            , withClasses [Action, FileRowItem]
             ]
             [ FontAwesome.share_alt ]
         else
@@ -186,28 +187,31 @@ renderFileHeader model =
 
 view : Model -> Html Msg
 view model =
-  case model.active of
-    Folder ->
-      case model.prompt of
-        None ->
-          div [style [("max-width", "400px")]]
-            [ renderFileHeader model
-            , renderFiles model.files
-            ]
+  let
+    contents = case model.active of
+      Folder ->
+        case model.prompt of
+          None ->
+            div [style [("max-width", "400px")]]
+              [ renderFileHeader model
+              , renderFiles model.files
+              ]
 
-        Share file -> SharePrompt.render ClosePrompt ShareMsg file
-        Shared result ->
-          div
-            []
-            [ div [] [text "Email has been sent"] ]
-        Sharing file email -> div [] [text "Sharing it"]
-        FailedShare reason -> div [] [text "Failed it"]
-        Menu ->
-          div [style [("max-width", "400px")]]
-            [ renderFileHeader model
-            -- , renderMenuOptions model
-            ]
+          Share file -> SharePrompt.render ClosePrompt ShareMsg file
+          Shared result ->
+            div
+              []
+              [ div [] [text "Email has been sent"] ]
+          Sharing file email -> div [] [text "Sharing it"]
+          FailedShare reason -> div [] [text "Failed it"]
+          Menu ->
+            div [style [("max-width", "400px")]]
+              [ renderFileHeader model
+              -- , renderMenuOptions model
+              ]
 
 
-    BadRoute reason -> div [] [text reason]
-    _ -> div [] []
+      BadRoute reason -> div [] [text reason]
+      _ -> div [] []
+  in
+    div [ withId Container ] [ contents ]

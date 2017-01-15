@@ -4,3 +4,5 @@ personal-file-share.iml
 Cargo.lock
 data.sql
 elm.js
+resources/app.min.css
+resources/index.html

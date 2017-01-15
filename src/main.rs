@@ -47,7 +47,8 @@ fn main() {
     // Unsecured resources
     router.get("/js/elm.js", SingleFileHandler::new(Path::new("elm.js").to_owned(), js_content_type()));
     router.get("/", RedirectHandler::new("index.html"));
-    router.get("/css/app.css", resources::create_css_handler());
+    router.get("/app.min.css", resources::create_css_handler());
+    router.get("/app.min.js", resources::create_js_handler());
     router.get("/shared/view", SharedFilelistHandler::new(database.clone()));
     router.get("/shared/download", ShareDownloadHandler::new(database.clone()));
     router.get("/login.html", LoginFormHandler::new());
