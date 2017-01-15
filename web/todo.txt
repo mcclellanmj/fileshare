@@ -1,4 +1,6 @@
 - Add an upload function
+- Fix issue where loading directly to the share prompt fails
+  - This may need some major changes in the model to accomplish
 - Make a unique type for FilePath to help with type annotations
 - Clean up the package.json/bower.json and remove no longer used libraries
 - Make the prompts and title bars more attactive, perhaps a reactive titlebar
