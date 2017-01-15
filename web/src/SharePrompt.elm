@@ -1,37 +1,38 @@
 module SharePrompt exposing (render)
 
 import Html exposing (Html, div, span, text, a)
-import Html.Attributes exposing (style, classList)
+import Html.Attributes exposing (style, classList, href)
 import Html.Events exposing (onClick, onSubmit)
 import Service exposing (File)
 import AttributesExtended as AttrExt
 import FontAwesome.Web as Icons
 import Pure
 import UI.Colors as Colors
+import Css as ShareCss
+import AddressableStates as States
 
-shareHeader: a -> String -> Html a
-shareHeader closeMsg title =
+shareHeader: String -> String -> Html a
+shareHeader source title =
   div [style [("display", "flex"), ("background-color", "black"), ("padding", "5px"), ("color", "white")]]
     [ span [] [text title]
     , a
-      [ AttrExt.voidHref
-      , onClick closeMsg
+      [ href (States.generateFolderAddress source)
       , style
         [ ("margin-left", "auto")
         , ("color", Colors.dangerText)
         ]
-      , classList [("text-danger", True)]
+      , ShareCss.withClass ShareCss.TextDanger
       ]
       [ Icons.close ]
     ]
 
-render: a -> (File -> String -> a) -> File -> Html a
-render closeMsg shareFn file =
+render: (String -> String -> a) -> String -> String -> Html a
+render shareFn path source =
   div
-  [ style [("max-width", "400px")] ]
-  [ shareHeader closeMsg ("Share: " ++ file.shortName)
+  []
+  [ shareHeader source ("Share: " ++ path)
   , Html.form
-    [ onSubmit (shareFn file "mcclellan.mj@gmail.com")
+    [ onSubmit (shareFn path "mcclellan.mj@gmail.com")
     , classList [ (Pure.formStacked, True)] ]
     [ text "Email"
     , Html.label

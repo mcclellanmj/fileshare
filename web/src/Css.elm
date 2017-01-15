@@ -14,6 +14,7 @@ type CssClass
   | FileDetails
   | MenuLink
   | MenuActive
+  | TextDanger
 
 type Id
   = Container
@@ -44,6 +45,7 @@ classString clazz =
     FileDetails -> "file-details"
     MenuLink -> "menu-link"
     MenuActive -> "menu-active"
+    TextDanger -> "text-danger"
 
 withClass : CssClass -> Attribute msg
 withClass clazz = Attr.class (classString clazz)

@@ -23,9 +23,9 @@ type Files
 type Prompt
   = None
   | Menu
-  | Share File
+  | Share String String
   | Shared ShareResult
-  | Sharing File String
+  | Sharing String String
   | FailedShare Http.Error
 
 type RouteModel
@@ -60,11 +60,10 @@ type Msg
   | WindowSizeFailed
   | ShowMenu
   | HideMenu
-  | ShowSharePrompt File
-  | ShareMsg File String
+  | ShowSharePrompt String String
+  | ShareMsg String String
   | ShareFailed Http.Error
   | ShareFinished ShareResult
-  | ClosePrompt
 
 -- Service
 main : Program Never
@@ -84,8 +83,8 @@ fetchCmd: String -> Cmd Msg
 fetchCmd path =
     Task.perform DirectoryFetchFailed DirectoryFetched (Service.fetchFiles path)
 
-shareCmd: File -> String -> Cmd Msg
-shareCmd file email = Task.perform ShareFailed ShareFinished (Service.shareFile file.fullPath email)
+shareCmd: String -> String -> Cmd Msg
+shareCmd path email = Task.perform ShareFailed ShareFinished (Service.shareFile path email)
 
 windowChange: Window.Size -> Msg
 windowChange dim = WindowResize (dim.width, dim.height)
@@ -97,9 +96,8 @@ update msg model =
     DirectoryFetched x -> ({ model | files=Loaded x}, Cmd.none)
     WindowResize size -> ({ model | windowSize=Just size}, Cmd.none)
     WindowSizeFailed -> ({ model | windowSize=Nothing}, Cmd.none)
-    ClosePrompt -> ({ model | prompt=None }, Cmd.none)
-    ShareMsg file email -> ({ model | prompt=Sharing file email}, shareCmd file email)
-    ShowSharePrompt file -> ({ model | prompt=Share file }, Cmd.none)
+    ShareMsg path email -> ({ model | prompt=Sharing path email}, shareCmd path email)
+    ShowSharePrompt path source -> ({ model | prompt=Share path source }, Cmd.none)
     ShareFailed r -> ({ model | prompt=FailedShare r}, Cmd.none)
     ShareFinished result -> ({ model | prompt=Shared result}, Cmd.none)
     ShowMenu -> ({model | prompt=Menu}, Cmd.none)
@@ -110,14 +108,15 @@ urlUpdate result model =
     case result of
       Err x -> ({ model | active=BadRoute x}, Cmd.none)
       Ok (AddressableStates.Folder s) -> ({ model | active=Folder, path=s, files=NotLoaded, prompt=None}, fetchCmd s)
+      Ok (AddressableStates.Share toShare sourcePath) -> ({ model | prompt=Share toShare sourcePath }, Cmd.none)
 
 -- View
 renderCoords: (Int, Int) -> String
 renderCoords (x, y) =
   "(" ++ toString x ++ "," ++ toString y ++ ")"
 
-renderFile: File -> Html Msg
-renderFile file =
+renderFile: String -> File -> Html Msg
+renderFile currentDir file =
   let
     (url, icon, classes) =
       if file.isFolder then
@@ -144,8 +143,7 @@ renderFile file =
         , div [ withClass FileDetails ] [ text "some date" ]
         ]
       , if file.isFolder == False then
-          a [ AttributesExtended.voidHref
-            , onClick (ShowSharePrompt file)
+          a [ href (AddressableStates.generateShareAddress file.fullPath currentDir)
             , withClasses [Action, FileRowItem]
             ]
             [ FontAwesome.share_alt ]
@@ -161,11 +159,11 @@ toErrorText err =
     Http.UnexpectedPayload s -> "Unexpected Payload: " ++ s
     Http.BadResponse code r -> (toString code) ++ " " ++ r
 
-renderFiles: Files -> Html Msg
-renderFiles files =
+renderFiles: Files -> String -> Html Msg
+renderFiles files currentDir =
   case files of
     NotLoaded -> div [] [text "Loading"]
-    Loaded files -> div [] (List.map renderFile files)
+    Loaded files -> div [] (List.map (renderFile currentDir) files)
     Error reason -> div [] [text ("Failed due to: " ++ (toErrorText reason))]
 
 renderFileHeader: Model -> Html Msg
@@ -192,12 +190,12 @@ view model =
       Folder ->
         case model.prompt of
           None ->
-            div [style [("max-width", "400px")]]
+            div []
               [ renderFileHeader model
-              , renderFiles model.files
+              , renderFiles model.files model.path
               ]
 
-          Share file -> SharePrompt.render ClosePrompt ShareMsg file
+          Share file source -> SharePrompt.render ShareMsg file source
           Shared result ->
             div
               []
@@ -205,7 +203,7 @@ view model =
           Sharing file email -> div [] [text "Sharing it"]
           FailedShare reason -> div [] [text "Failed it"]
           Menu ->
-            div [style [("max-width", "400px")]]
+            div []
               [ renderFileHeader model
               -- , renderMenuOptions model
               ]

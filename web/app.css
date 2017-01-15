@@ -1,5 +1,6 @@
 #container {
-
+  margin: 0 auto;
+  max-width: 800px;
 }
 
 .type-icon {
@@ -69,4 +70,9 @@ a.action, a.action:visited {
 
 .menu-active {
     color: white;
+}
+
+.text-danger {
+  margin-left: auto;
+  color: #DD2121;
 }
