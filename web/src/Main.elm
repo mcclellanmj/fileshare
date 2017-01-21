@@ -13,6 +13,7 @@ import AttributesExtended
 import SharePrompt
 import FontAwesome.Web as FontAwesome
 import Css exposing (withClass, withClasses, CssClass(..), withId, Id(..))
+import Menu
 
 -- Model
 type Files
@@ -33,22 +34,38 @@ type RouteModel
   | BadRoute String
   | Folder
 
-type alias Model =
-  { active: RouteModel
-  , path: String
-  , prompt: Prompt
+type alias FilePath = String
+
+type alias Model = { viewModel: ViewModel }
+
+type alias ShareData =
+  { sharing: FilePath
+  , return: FilePath
+  }
+
+type alias MenuData = { active: Bool }
+
+type alias FolderData =
+  { path: FilePath
   , files: Files
-  , windowSize: Maybe (Int, Int)
+  , menu: MenuData
+  }
+
+type ViewModel
+  = ShareModel ShareData
+  | FolderModel FolderData
+  | ErrorModel String
+
+initialFolderData : FolderData
+initialFolderData =
+  { path = ""
+  , files = NotLoaded
+  , menu = { active = False }
   }
 
 initialModel : Model
 initialModel =
-  { windowSize = Nothing
-  , path = ""
-  , files = NotLoaded
-  , active = Loading
-  , prompt = None
-  }
+  { viewModel = FolderModel initialFolderData }
 
 init : Result String AddressableState -> ( Model, Cmd Msg )
 init result = urlUpdate result initialModel
@@ -103,12 +120,27 @@ update msg model =
     ShowMenu -> ({model | prompt=Menu}, Cmd.none)
     HideMenu -> ({ model | prompt=None }, Cmd.none)
 
+loadingFolderModel : FilePath -> ViewModel
+loadingFolderModel filepath =
+  FolderModel
+    { path = filepath
+    , files = NotLoaded
+    , menu = { active = False }
+    }
+
+shareModel : FilePath -> FilePath -> ViewModel
+shareModel toShare toReturnTo =
+  ShareModel
+    { sharing = toShare
+    , return = toReturnTo
+    }
+
 urlUpdate : Result String AddressableState -> Model -> ( Model, Cmd Msg )
 urlUpdate result model =
     case result of
-      Err x -> ({ model | active=BadRoute x}, Cmd.none)
-      Ok (AddressableStates.Folder s) -> ({ model | active=Folder, path=s, files=NotLoaded, prompt=None}, fetchCmd s)
-      Ok (AddressableStates.Share toShare sourcePath) -> ({ model | prompt=Share toShare sourcePath }, Cmd.none)
+      Err x -> ({ model | viewModel = ErrorModel x}, Cmd.none)
+      Ok (AddressableStates.Folder s) -> ({ model | viewModel = loadingFolderModel s}, fetchCmd s)
+      Ok (AddressableStates.Share toShare sourcePath) -> ({ model | viewModel = shareModel toShare sourcePath}, Cmd.none)
 
 -- View
 renderCoords: (Int, Int) -> String
@@ -166,10 +198,10 @@ renderFiles files currentDir =
     Loaded files -> div [] (List.map (renderFile currentDir) files)
     Error reason -> div [] [text ("Failed due to: " ++ (toErrorText reason))]
 
-renderFileHeader: Model -> Html Msg
+renderFileHeader: FolderData -> Html Msg
 renderFileHeader model =
   let
-    menuAction = if model.prompt == Menu then HideMenu else ShowMenu
+    menuAction = if model.menu.active == True then HideMenu else ShowMenu
   in
     div [ style [("padding", "5px"), ("display", "flex"), ("background-color", "black"), ("color", "white")] ]
       [ span [] [text model.path]
@@ -177,7 +209,7 @@ renderFileHeader model =
         [ a
           [ AttributesExtended.voidHref
           , onClick menuAction
-          , classList [("menu-link", True), ("menu-active", model.prompt == Menu)]
+          , classList [("menu-link", True), ("menu-active", model.menu.active == True)]
           ]
           [FontAwesome.navicon]
         ]
@@ -186,30 +218,24 @@ renderFileHeader model =
 view : Model -> Html Msg
 view model =
   let
-    contents = case model.active of
-      Folder ->
-        case model.prompt of
-          None ->
-            div []
-              [ renderFileHeader model
-              , renderFiles model.files model.path
-              ]
+    contents = case model.viewModel of
+      FolderModel folderData ->
+        div []
+          [ renderFileHeader folderData
+          , renderFiles folderData.files folderData.path
+          ]
 
-          Share file source -> SharePrompt.render ShareMsg file source
-          Shared result ->
-            div
-              []
-              [ div [] [text "Email has been sent"] ]
-          Sharing file email -> div [] [text "Sharing it"]
-          FailedShare reason -> div [] [text "Failed it"]
-          Menu ->
-            div []
-              [ renderFileHeader model
-              -- , renderMenuOptions model
-              ]
+      ShareModel shareData -> div [] [text "ToDo"]
+          -- Share file source -> SharePrompt.render ShareMsg file source
+          -- Shared result ->
+            -- div
+              -- []
+              -- [ div [] [text "Email has been sent"] ]
+          -- Sharing file email -> div [] [text "Sharing it"]
+          -- FailedShare reason -> div [] [text "Failed it"]
+          -- Menu -> Menu.render model.path
 
-
-      BadRoute reason -> div [] [text reason]
+      -- BadRoute reason -> div [] [text reason]
       _ -> div [] []
   in
     div [ withId Container ] [ contents ]
