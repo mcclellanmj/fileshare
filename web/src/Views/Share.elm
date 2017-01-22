@@ -1,4 +1,4 @@
-module Views.Share exposing (render, Model, Msg, update)
+module Views.Share exposing (render, Model, Msg, update, load)
 
 import Html exposing (Html, div, span, text, a)
 import Html.Attributes exposing (style, classList, href)
@@ -35,6 +35,12 @@ type Msg
 shareCmd: String -> String -> Cmd Msg
 shareCmd path email = Task.perform ShareFailed ShareFinished (Service.shareFile path email)
 
+load : FilePath -> FilePath -> (Model, Cmd Msg)
+load toShare source =
+  ( { sharing = toShare
+    , return = source
+    , state = Input}, Cmd.none )
+
 update : Model -> Msg -> (Model, Cmd Msg)
 update shareData shareMsg =
   case shareMsg of
@@ -57,11 +63,11 @@ shareHeader source title =
       [ Icons.close ]
     ]
 
-render: (String -> String -> a) -> String -> String -> Html Msg
-render shareFn path source =
+render: Model -> Html Msg
+render model =
   div
   []
-  [ shareHeader source ("Share: " ++ path)
+  [ shareHeader model.return ("Share: " ++ model.sharing)
   , Html.form
     [ onSubmit (DoShare "mcclellan.mj@gmail.com")
     , classList [ (Pure.formStacked, True)] ]

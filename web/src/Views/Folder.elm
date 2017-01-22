@@ -30,12 +30,15 @@ type alias Model =
   , menuActive: Bool
   }
 
-initialModel : Model
-initialModel =
-  { path = ""
+loadingModel : Files.FilePath -> Model
+loadingModel filePath =
+  { path = filePath
   , files = NotLoaded
   , menuActive = False
   }
+
+initialModel : Model
+initialModel = loadingModel ""
 
 update : Model -> Msg -> (Model, Cmd Msg)
 update model msg =
@@ -49,16 +52,9 @@ fetchCmd: String -> Cmd Msg
 fetchCmd path =
   Task.perform DirectoryFetchFailed DirectoryFetched (Service.fetchFiles path)
 
-loadFiles : Model -> Files.FilePath -> (Model, Cmd Msg)
-loadFiles curModel path =
-  let
-    newModel =
-      { curModel
-      | path = path
-      , files = NotLoaded
-      }
-  in
-    ( newModel, fetchCmd path )
+loadFiles : Files.FilePath -> (Model, Cmd Msg)
+loadFiles path =
+  ( loadingModel path, fetchCmd path )
 
 renderFileHeader: Model -> Html Msg
 renderFileHeader model =

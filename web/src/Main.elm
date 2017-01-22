@@ -55,7 +55,7 @@ main : Program Never
 main =
   Navigation.program (Navigation.makeParser AddressableStates.decode)
     { init = init
-    , subscriptions = Sub.none
+    , subscriptions = \_ -> Sub.none
     , update = update
     , urlUpdate = urlUpdate
     , view = view
@@ -64,37 +64,42 @@ main =
 update: Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
-    FolderMsg m -> fromFolder model (Views.Folder.update m)
+    FolderMsg m ->
+      case model.viewModel of
+        FolderModel folderModel -> fromFolder model (Views.Folder.update folderModel m)
+        -- If we got a Folder Msg but we are not in the Folder View, disregard its late and the user has moved on
+        _ -> (model, Cmd.none)
+
     ShareMsg m -> (model, Cmd.none)
 
-shareModel : FilePath -> FilePath -> ViewModel
-shareModel toShare toReturnTo =
-  ShareModel
-    { sharing = toShare
-    , return = toReturnTo
-    }
-
-fromFolder : Model -> (Views.Folder.Model, Cmd Views.Folder.Msg) -> (Model, Msg)
+fromFolder : Model -> (Views.Folder.Model, Cmd Views.Folder.Msg) -> (Model, Cmd Msg)
 fromFolder curModel (viewModel, viewCmd) =
   let
     newModel = { curModel | viewModel = FolderModel viewModel }
   in
     (newModel, Cmd.map FolderMsg viewCmd)
 
+fromShare : Model -> (Views.Share.Model, Cmd Views.Share.Msg) -> (Model, Cmd Msg)
+fromShare curModel (viewModel, viewCmd) =
+  let
+    newModel = { curModel | viewModel = ShareModel viewModel }
+  in
+    (newModel, Cmd.map ShareMsg viewCmd)
+
 urlUpdate : Result String AddressableState -> Model -> ( Model, Cmd Msg )
 urlUpdate result model =
     case result of
       Err x -> ({ model | viewModel = ErrorModel x}, Cmd.none)
-      Ok (AddressableStates.Folder s) -> fromFolder model Views.Folder.loadFiles
-      Ok (AddressableStates.Share toShare sourcePath) -> ({ model | viewModel = shareModel toShare sourcePath}, Cmd.none)
+      Ok (AddressableStates.Folder s) -> fromFolder model (Views.Folder.loadFiles s)
+      Ok (AddressableStates.Share toShare sourcePath) -> fromShare model (Views.Share.load toShare sourcePath)
 
 -- View
 view : Model -> Html Msg
 view model =
   let
     contents = case model.viewModel of
-      FolderModel model -> App.map FolderMsg (Views.Folder.render model)
-      ShareModel shareData -> App.map ShareMsg (Views.Share.render model)
+      FolderModel viewModel -> App.map FolderMsg (Views.Folder.render viewModel)
+      ShareModel viewModel -> App.map ShareMsg (Views.Share.render viewModel)
           -- Share file source -> SharePrompt.render ShareMsg file source
           -- Shared result ->
             -- div
