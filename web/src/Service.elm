@@ -1,7 +1,7 @@
 module Service exposing (..)
 
 import Http
-import Json.Decode exposing (Decoder, string, object2, object4, bool, int, list, (:=))
+import Json.Decode exposing (Decoder, string, map2, map4, bool, int, list, field)
 import Json.Encode as JEncode
 import Task exposing (Task)
 
@@ -27,36 +27,33 @@ createShareJson path email =
   in
     JEncode.encode 0 shareDetails
 
-shareFile: String -> String -> Task Http.Error (ShareResult)
+shareFile: String -> String -> Http.Request ShareResult
 shareFile path email =
   let
-    url = Http.url "/share" []
+    url = "/share"
   in
-    Http.post parseShare url (Http.string (createShareJson path email))
+    Http.post url (Http.stringBody "application/json" (createShareJson path email)) parseShare
 
-fetchFiles: String -> Task Http.Error (List File)
+fetchFiles: String -> Http.Request List File
 fetchFiles path =
   let
-    url =
-      Http.url
-        "/view"
-        [("folder_path", path)]
+    url = "/view?folder_path=" ++ Http.encodeUri path
   in
     Http.get parseFiles url
 
 parseShare: Decoder ShareResult
 parseShare =
-  object2 ShareResult
-    ("uuid" := string)
-    ("url" := string)
+  map2 ShareResult
+    (field "uuid" string)
+    (field "url" string)
 
 parseFiles: Decoder (List File)
 parseFiles =
   let
-    file = object4 File
-      ("short_name" := string)
-      ("full_path" := string)
-      ("is_folder" := bool)
-      ("size" := int)
+    file = map4 File
+      (field "short_name" string)
+      (field "full_path" string)
+      (field "is_folder" bool)
+      (field "size" int)
   in
     list file

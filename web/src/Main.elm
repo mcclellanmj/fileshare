@@ -1,12 +1,9 @@
-import Html.App as App
 import Html.Attributes exposing (href, style, src, classList)
 import Html.Events exposing (onClick, onSubmit)
 import Html exposing (Html, Attribute, div, h1, input, text, ul, li, a, span, img, textarea)
-import Window
 import Task
 import Http exposing (Error)
 import Service exposing (File, ShareResult, fetchFiles)
-import Json.Decode exposing (Decoder, object4, string, int, bool, list, (:=))
 import Navigation
 import AddressableStates exposing (AddressableState(..))
 import AttributesExtended
@@ -53,7 +50,7 @@ type Msg
 -- Service
 main : Program Never
 main =
-  Navigation.program (Navigation.makeParser AddressableStates.decode)
+  Navigation.program
     { init = init
     , subscriptions = \_ -> Sub.none
     , update = update
@@ -102,8 +99,8 @@ view : Model -> Html Msg
 view model =
   let
     contents = case model.viewModel of
-      FolderModel viewModel -> App.map FolderMsg (Views.Folder.render viewModel)
-      ShareModel viewModel -> App.map ShareMsg (Views.Share.render viewModel)
+      FolderModel viewModel -> Html.map FolderMsg (Views.Folder.render viewModel)
+      ShareModel viewModel -> Html.map ShareMsg (Views.Share.render viewModel)
           -- Share file source -> SharePrompt.render ShareMsg file source
           -- Shared result ->
             -- div
