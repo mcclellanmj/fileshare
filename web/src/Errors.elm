@@ -7,5 +7,6 @@ toText err =
   case err of
     Http.Timeout -> "Timeout"
     Http.NetworkError -> "Network Error"
-    Http.UnexpectedPayload s -> "Unexpected Payload: " ++ s
-    Http.BadResponse code r -> (toString code) ++ " " ++ r
+    Http.BadUrl _ -> "Bad Url"
+    Http.BadStatus _ -> "Bad Status"
+    Http.BadPayload _ _ -> "Bad Payload"

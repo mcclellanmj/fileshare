@@ -46,11 +46,12 @@ init result = urlUpdate result initialModel
 type Msg
   = FolderMsg Views.Folder.Msg
   | ShareMsg Views.Share.Msg
+  | UrlChange Navigation.Location
 
 -- Service
 main : Program Never
 main =
-  Navigation.program
+  Navigation.program UrlChange
     { init = init
     , subscriptions = \_ -> Sub.none
     , update = update
@@ -72,6 +73,8 @@ update msg model =
         ShareModel shareModel -> fromShare model (Views.Share.update shareModel m)
         -- If we got a Folder Msg but we are not in the Folder View, disregard its late and the user has moved on
         _ -> (model, Cmd.none)
+
+    UrlChange location -> (model, Cmd.none)
 
 fromFolder : Model -> (Views.Folder.Model, Cmd Views.Folder.Msg) -> (Model, Cmd Msg)
 fromFolder curModel (viewModel, viewCmd) =

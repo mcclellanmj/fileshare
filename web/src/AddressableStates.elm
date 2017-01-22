@@ -1,7 +1,7 @@
 module AddressableStates exposing (AddressableState(..), routeParser, decode, generateFolderAddress, generateShareAddress)
 
 import Navigation exposing (Location)
-import UrlParser exposing (Parser, parse, (</>), format, int, oneOf, s, string)
+import UrlParser exposing (Parser, parseHash, (</>), int, oneOf, s, string)
 import Http
 import String
 
@@ -12,20 +12,20 @@ type AddressableState
 routeParser : Parser (AddressableState -> a) a
 routeParser =
     oneOf
-        [ format (Folder ".") (s "")
-        , format (Http.uriDecode >> Folder) (s "folder" </> string)
-        , format (Folder ".") (s "folder")
-        , format (\share source -> Share (Http.uriDecode share) (Http.uriDecode source)) (s "share" </> string </> s "source" </> string)
+        [ UrlParser.map (Folder ".") (s "")
+        , UrlParser.map (Http.decodeUri >> Folder) (s "folder" </> string)
+        , UrlParser.map (Folder ".") (s "folder")
+        , UrlParser.map (\share source -> Share (Http.decodeUri share) (Http.decodeUri source)) (s "share" </> string </> s "source" </> string)
         ]
 
 decode : Location -> Result String AddressableState
 decode location =
-    parse identity routeParser (String.dropLeft 1 location.hash)
+    parseHash identity routeParser (String.dropLeft 1 location.hash)
 
 generatePathUrl : List (String, String) -> String
 generatePathUrl parts =
   let
-    encodedParts = List.map (\(x, y) -> (x, Http.uriEncode y)) parts
+    encodedParts = List.map (\(x, y) -> (x, Http.encodeUri y)) parts
     queryString = List.foldl (\(x, y) sum -> sum ++ x ++ "/" ++ y ++ "/") "" encodedParts
   in
     "#" ++ queryString

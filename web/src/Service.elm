@@ -34,12 +34,12 @@ shareFile path email =
   in
     Http.post url (Http.stringBody "application/json" (createShareJson path email)) parseShare
 
-fetchFiles: String -> Http.Request List File
+fetchFiles: String -> Http.Request (List File)
 fetchFiles path =
   let
     url = "/view?folder_path=" ++ Http.encodeUri path
   in
-    Http.get parseFiles url
+    Http.get url parseFiles
 
 parseShare: Decoder ShareResult
 parseShare =
