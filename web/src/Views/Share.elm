@@ -14,6 +14,7 @@ import Files exposing (FilePath)
 import Service exposing (ShareResult)
 import Http
 import Task
+import Errors
 
 type State
   = Input
@@ -65,26 +66,34 @@ shareHeader source title =
 
 render: Model -> Html Msg
 render model =
-  div
-  []
-  [ shareHeader model.return ("Share: " ++ model.sharing)
-  , Html.form
-    [ onSubmit (DoShare "mcclellan.mj@gmail.com")
-    , classList [ (Pure.formStacked, True)] ]
-    [ text "Email"
-    , Html.label
-      [ Html.Attributes.for "email" ]
-      [ Html.input
-        [ Html.Attributes.placeholder "Email"
-        , Html.Attributes.name "email"
-        , Html.Attributes.id "email"
-        ]
-        []
+  let
+    contents =
+      case model.state of
+        Input -> Html.form
+          [ onSubmit (DoShare "mcclellan.mj@gmail.com")
+          , classList [ (Pure.formStacked, True)]
+          ]
+          [ text "Email"
+          , Html.label
+            [ Html.Attributes.for "email" ]
+            [ Html.input
+              [ Html.Attributes.placeholder "Email"
+              , Html.Attributes.name "email"
+              , Html.Attributes.id "email"
+              ]
+              []
+            ]
+          , Html.button
+            [ classList [ (Pure.button, True), (Pure.buttonPrimary, True) ] ]
+            [ Icons.share_alt, text "Share it" ]
+          ]
+        Sharing -> text "Sharing"
+        Finished result -> text ("Finished: " ++ result.uuid)
+        Failed error -> text (Errors.toText error)
+  in
+    div
+      []
+      [ shareHeader model.return ("Share: " ++ model.sharing)
+      , contents
       ]
-    , Html.button
-      [ classList [ (Pure.button, True), (Pure.buttonPrimary, True) ]
-      ]
-      [ Icons.share_alt, text "Share it" ]
-    ]
-  ]
 

@@ -70,7 +70,11 @@ update msg model =
         -- If we got a Folder Msg but we are not in the Folder View, disregard its late and the user has moved on
         _ -> (model, Cmd.none)
 
-    ShareMsg m -> (model, Cmd.none)
+    ShareMsg m ->
+      case model.viewModel of
+        ShareModel shareModel -> fromShare model (Views.Share.update shareModel m)
+        -- If we got a Folder Msg but we are not in the Folder View, disregard its late and the user has moved on
+        _ -> (model, Cmd.none)
 
 fromFolder : Model -> (Views.Folder.Model, Cmd Views.Folder.Msg) -> (Model, Cmd Msg)
 fromFolder curModel (viewModel, viewCmd) =
