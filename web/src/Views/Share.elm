@@ -1,4 +1,4 @@
-module SharePrompt exposing (render)
+module Views.Share exposing (render, Model, Msg, update)
 
 import Html exposing (Html, div, span, text, a)
 import Html.Attributes exposing (style, classList, href)
@@ -10,6 +10,37 @@ import Pure
 import UI.Colors as Colors
 import Css as ShareCss
 import AddressableStates as States
+import Files exposing (FilePath)
+import Service exposing (ShareResult)
+import Http
+import Task
+
+type State
+  = Input
+  | Sharing
+  | Finished ShareResult
+  | Failed Http.Error
+
+type alias Model =
+  { sharing: FilePath
+  , return: FilePath
+  , state: State
+  }
+
+type Msg
+  = DoShare String
+  | ShareFailed Http.Error
+  | ShareFinished ShareResult
+
+shareCmd: String -> String -> Cmd Msg
+shareCmd path email = Task.perform ShareFailed ShareFinished (Service.shareFile path email)
+
+update : Model -> Msg -> (Model, Cmd Msg)
+update shareData shareMsg =
+  case shareMsg of
+    DoShare email -> ({ shareData | state = Sharing }, shareCmd shareData.sharing email)
+    ShareFailed error -> ({ shareData | state = Failed error }, Cmd.none)
+    ShareFinished result -> ({ shareData | state = Finished result }, Cmd.none)
 
 shareHeader: String -> String -> Html a
 shareHeader source title =
@@ -26,13 +57,13 @@ shareHeader source title =
       [ Icons.close ]
     ]
 
-render: (String -> String -> a) -> String -> String -> Html a
+render: (String -> String -> a) -> String -> String -> Html Msg
 render shareFn path source =
   div
   []
   [ shareHeader source ("Share: " ++ path)
   , Html.form
-    [ onSubmit (shareFn path "mcclellan.mj@gmail.com")
+    [ onSubmit (DoShare "mcclellan.mj@gmail.com")
     , classList [ (Pure.formStacked, True)] ]
     [ text "Email"
     , Html.label
