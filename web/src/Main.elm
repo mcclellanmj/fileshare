@@ -40,8 +40,8 @@ initialModel : Model
 initialModel =
   { viewModel = FolderModel Views.Folder.initialModel }
 
-init : Result String AddressableState -> ( Model, Cmd Msg )
-init result = urlUpdate result initialModel
+init : Navigation.Location -> ( Model, Cmd Msg )
+init location = ( initialModel, Task.perform UrlChange (Task.succeed location) )
 
 type Msg
   = FolderMsg Views.Folder.Msg
@@ -49,15 +49,20 @@ type Msg
   | UrlChange Navigation.Location
 
 -- Service
-main : Program Never
 main =
   Navigation.program UrlChange
     { init = init
-    , subscriptions = \_ -> Sub.none
     , update = update
-    , urlUpdate = urlUpdate
     , view = view
+    , subscriptions = \_ -> Sub.none
     }
+
+urlUpdate: Model -> Navigation.Location -> (Model, Cmd Msg)
+urlUpdate model newLocation =
+  case AddressableStates.decode newLocation of
+    Nothing -> ({ model | viewModel = ErrorModel ("Unknown url [" ++ String.dropLeft 1 newLocation.hash ++ "]") }, Cmd.none)
+    Just (AddressableStates.Folder path) -> fromFolder model (Views.Folder.loadFiles path)
+    Just (AddressableStates.Share toShare sourcePath) -> fromShare model (Views.Share.load toShare sourcePath)
 
 update: Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -74,7 +79,7 @@ update msg model =
         -- If we got a Folder Msg but we are not in the Folder View, disregard its late and the user has moved on
         _ -> (model, Cmd.none)
 
-    UrlChange location -> (model, Cmd.none)
+    UrlChange location -> urlUpdate model location
 
 fromFolder : Model -> (Views.Folder.Model, Cmd Views.Folder.Msg) -> (Model, Cmd Msg)
 fromFolder curModel (viewModel, viewCmd) =
@@ -89,13 +94,6 @@ fromShare curModel (viewModel, viewCmd) =
     newModel = { curModel | viewModel = ShareModel viewModel }
   in
     (newModel, Cmd.map ShareMsg viewCmd)
-
-urlUpdate : Result String AddressableState -> Model -> ( Model, Cmd Msg )
-urlUpdate result model =
-    case result of
-      Err x -> ({ model | viewModel = ErrorModel x}, Cmd.none)
-      Ok (AddressableStates.Folder s) -> fromFolder model (Views.Folder.loadFiles s)
-      Ok (AddressableStates.Share toShare sourcePath) -> fromShare model (Views.Share.load toShare sourcePath)
 
 -- View
 view : Model -> Html Msg
@@ -113,7 +111,6 @@ view model =
           -- FailedShare reason -> div [] [text "Failed it"]
           -- Menu -> Menu.render model.path
 
-      -- BadRoute reason -> div [] [text reason]
-      _ -> div [] []
+      ErrorModel reason -> div [] [text reason]
   in
     div [ withId Container ] [ contents ]

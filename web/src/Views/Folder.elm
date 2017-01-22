@@ -11,6 +11,7 @@ import Errors
 import Http
 import AddressableStates
 import AttributesExtended
+import ResultsExtended
 import Task
 
 type Msg
@@ -50,7 +51,7 @@ update model msg =
 
 fetchCmd: String -> Cmd Msg
 fetchCmd path =
-  Task.perform DirectoryFetchFailed DirectoryFetched (Service.fetchFiles path)
+  Http.send (ResultsExtended.mapAll DirectoryFetchFailed DirectoryFetched) (Service.fetchFiles path)
 
 loadFiles : Files.FilePath -> (Model, Cmd Msg)
 loadFiles path =
@@ -80,7 +81,7 @@ renderFile currentDir file =
       if file.isFolder then
         (AddressableStates.generateFolderAddress file.fullPath, FontAwesome.folder, [ ("folder-icon", True), ("type-icon", True) ])
       else
-        (Http.url "/download" [("filename", file.fullPath)], FontAwesome.sticky_note, [ ("file-icon", True), ("type-icon", True) ])
+        ("/download?filename=" ++ (Http.encodeUri file.fullPath), FontAwesome.sticky_note, [ ("file-icon", True), ("type-icon", True) ])
   in
     div
       [ Css.withClass Css.FileRow ]

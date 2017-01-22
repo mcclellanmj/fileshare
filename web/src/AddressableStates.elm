@@ -1,26 +1,47 @@
-module AddressableStates exposing (AddressableState(..), routeParser, decode, generateFolderAddress, generateShareAddress)
+module AddressableStates exposing (AddressableState(..), decode, generateFolderAddress, generateShareAddress)
 
 import Navigation exposing (Location)
-import UrlParser exposing (Parser, parseHash, (</>), int, oneOf, s, string)
+import UrlParser exposing (Parser, parseHash, (</>), int, oneOf, s, string, custom)
 import Http
 import String
+import Debug
 
 type AddressableState
    = Folder String
    | Share String String
 
+encodedUri : Parser (String -> a) a
+encodedUri =
+  custom "ENCODEDURI" ( Http.decodeUri >> Result.fromMaybe "Unable to parse uri" )
+
 routeParser : Parser (AddressableState -> a) a
 routeParser =
-    oneOf
-        [ UrlParser.map (Folder ".") (s "")
-        , UrlParser.map (Http.decodeUri >> Folder) (s "folder" </> string)
-        , UrlParser.map (Folder ".") (s "folder")
-        , UrlParser.map (\share source -> Share (Http.decodeUri share) (Http.decodeUri source)) (s "share" </> string </> s "source" </> string)
-        ]
+  oneOf
+    [ UrlParser.map (Folder ".") UrlParser.top
+    , UrlParser.map Folder (s "folder" </> encodedUri)
+    , UrlParser.map (Folder ".") (s "folder")
+    , UrlParser.map Share (s "share" </> encodedUri </> s "source" </> encodedUri)
+    ]
 
-decode : Location -> Result String AddressableState
+fixLocationQuery : Location -> Location
+fixLocationQuery location =
+  let
+    hash =
+      String.split "?" location.hash
+        |> List.head
+        |> Maybe.withDefault ""
+
+    search =
+      String.split "?" location.hash
+        |> List.drop 1
+        |> String.join "?"
+        |> String.append "?"
+  in
+    { location | hash = hash, search = search }
+
+decode : Location -> Maybe AddressableState
 decode location =
-    parseHash identity routeParser (String.dropLeft 1 location.hash)
+    parseHash routeParser (fixLocationQuery location)
 
 generatePathUrl : List (String, String) -> String
 generatePathUrl parts =
