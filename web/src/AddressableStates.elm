@@ -1,4 +1,10 @@
-module AddressableStates exposing (AddressableState(..), decode, generateFolderAddress, generateShareAddress)
+module AddressableStates exposing
+  ( AddressableState(..)
+  , decode
+  , generateFolderAddress
+  , generateShareAddress
+  , generateCreateAddress
+  , generateUploadAddress)
 
 import Navigation exposing (Location)
 import UrlParser exposing (Parser, parseHash, (</>), int, oneOf, s, string, custom)
@@ -9,6 +15,8 @@ import Debug
 type AddressableState
    = Folder String
    | Share String String
+   | Upload String
+   | CreateDir String
 
 encodedUri : Parser (String -> a) a
 encodedUri =
@@ -21,27 +29,13 @@ routeParser =
     , UrlParser.map Folder (s "folder" </> encodedUri)
     , UrlParser.map (Folder ".") (s "folder")
     , UrlParser.map Share (s "share" </> encodedUri </> s "source" </> encodedUri)
+    , UrlParser.map Upload (s "upload" </> encodedUri)
+    , UrlParser.map CreateDir (s "create" </> encodedUri)
     ]
-
-fixLocationQuery : Location -> Location
-fixLocationQuery location =
-  let
-    hash =
-      String.split "?" location.hash
-        |> List.head
-        |> Maybe.withDefault ""
-
-    search =
-      String.split "?" location.hash
-        |> List.drop 1
-        |> String.join "?"
-        |> String.append "?"
-  in
-    { location | hash = hash, search = search }
 
 decode : Location -> Maybe AddressableState
 decode location =
-    parseHash routeParser (fixLocationQuery location)
+    parseHash routeParser location
 
 generatePathUrl : List (String, String) -> String
 generatePathUrl parts =
@@ -56,3 +50,9 @@ generateFolderAddress path = generatePathUrl [("folder", path)]
 
 generateShareAddress : String -> String -> String
 generateShareAddress path source = generatePathUrl [("share", path), ("source", source)]
+
+generateUploadAddress : String -> String
+generateUploadAddress path = generatePathUrl [("upload", path)]
+
+generateCreateAddress : String -> String
+generateCreateAddress path = generatePathUrl [("create", path)]

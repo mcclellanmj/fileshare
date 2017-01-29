@@ -12,33 +12,22 @@ import Css exposing (withClass, withClasses, CssClass(..), withId, Id(..))
 import Menu
 import Views.Share
 import Views.Folder
+import Views.Upload
+import Views.CreateDir
 
 -- Model
-type Prompt
-  = None
-  | Menu
-  | Share String String
-  | Shared ShareResult
-  | Sharing String String
-  | FailedShare Http.Error
+type alias Model = { componentModel: ComponentModel }
 
-type RouteModel
-  = Loading
-  | BadRoute String
-  | Folder
-
-type alias FilePath = String
-
-type alias Model = { viewModel: ViewModel }
-
-type ViewModel
+type ComponentModel
   = ShareModel Views.Share.Model
   | FolderModel Views.Folder.Model
+  | UploadModel Views.Upload.Model
+  | CreateDirModel Views.CreateDir.Model
   | ErrorModel String
 
 initialModel : Model
 initialModel =
-  { viewModel = FolderModel Views.Folder.initialModel }
+  { componentModel = FolderModel Views.Folder.initialModel }
 
 init : Navigation.Location -> ( Model, Cmd Msg )
 init location = ( initialModel, Task.perform UrlChange (Task.succeed location) )
@@ -46,6 +35,8 @@ init location = ( initialModel, Task.perform UrlChange (Task.succeed location) )
 type Msg
   = FolderMsg Views.Folder.Msg
   | ShareMsg Views.Share.Msg
+  | UploadMsg Views.Upload.Msg
+  | CreateDirMsg Views.CreateDir.Msg
   | UrlChange Navigation.Location
 
 -- Service
@@ -60,57 +51,55 @@ main =
 urlUpdate: Model -> Navigation.Location -> (Model, Cmd Msg)
 urlUpdate model newLocation =
   case AddressableStates.decode newLocation of
-    Nothing -> ({ model | viewModel = ErrorModel ("Unknown url [" ++ String.dropLeft 1 newLocation.hash ++ "]") }, Cmd.none)
-    Just (AddressableStates.Folder path) -> fromFolder model (Views.Folder.loadFiles path)
-    Just (AddressableStates.Share toShare sourcePath) -> fromShare model (Views.Share.load toShare sourcePath)
+    Nothing -> ({ model | componentModel = ErrorModel ("Unknown url [" ++ String.dropLeft 1 newLocation.hash ++ "]") }, Cmd.none)
+    Just (AddressableStates.Folder path) -> mapFolderUpdate model (Views.Folder.loadFiles path)
+    Just (AddressableStates.Share toShare sourcePath) -> mapShareUpdate model (Views.Share.load toShare sourcePath)
+    Just (AddressableStates.Upload toUploadTo) -> mapUploadUpdate model (Views.Upload.load toUploadTo)
+    Just (AddressableStates.CreateDir toCreateIn) -> ( { model | componentModel = ErrorModel "Create Not Implemented" }, Cmd.none)
 
 update: Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
-    FolderMsg m ->
-      case model.viewModel of
-        FolderModel folderModel -> fromFolder model (Views.Folder.update folderModel m)
-        -- If we got a Folder Msg but we are not in the Folder View, disregard its late and the user has moved on
+    FolderMsg componentMsg ->
+      case model.componentModel of
+        FolderModel folderModel -> mapFolderUpdate model (Views.Folder.update folderModel componentMsg)
         _ -> (model, Cmd.none)
 
-    ShareMsg m ->
-      case model.viewModel of
-        ShareModel shareModel -> fromShare model (Views.Share.update shareModel m)
-        -- If we got a Folder Msg but we are not in the Folder View, disregard its late and the user has moved on
+    ShareMsg componentMsg ->
+      case model.componentModel of
+        ShareModel shareModel -> mapShareUpdate model (Views.Share.update shareModel componentMsg)
+        _ -> (model, Cmd.none)
+
+    UploadMsg componentMsg ->
+      case model.componentModel of
+        UploadModel uploadModel -> mapUploadUpdate model (Views.Upload.update uploadModel componentMsg)
+        _ -> (model, Cmd.none)
+
+    CreateDirMsg componentMsg ->
+      case model.componentModel of
+        CreateDirModel uploadModel -> mapCreateDirUpdate model (Views.CreateDir.update uploadModel componentMsg)
         _ -> (model, Cmd.none)
 
     UrlChange location -> urlUpdate model location
 
-fromFolder : Model -> (Views.Folder.Model, Cmd Views.Folder.Msg) -> (Model, Cmd Msg)
-fromFolder curModel (viewModel, viewCmd) =
-  let
-    newModel = { curModel | viewModel = FolderModel viewModel }
-  in
-    (newModel, Cmd.map FolderMsg viewCmd)
+mapComponentUpdate : (a -> ComponentModel) -> (b -> Msg) -> Model -> (a, Cmd b) -> (Model, Cmd Msg)
+mapComponentUpdate viewFn msgFn model (componentModel, viewCmd) =
+  ({ model | componentModel = viewFn componentModel }, Cmd.map msgFn viewCmd )
 
-fromShare : Model -> (Views.Share.Model, Cmd Views.Share.Msg) -> (Model, Cmd Msg)
-fromShare curModel (viewModel, viewCmd) =
-  let
-    newModel = { curModel | viewModel = ShareModel viewModel }
-  in
-    (newModel, Cmd.map ShareMsg viewCmd)
+mapFolderUpdate = mapComponentUpdate FolderModel FolderMsg
+mapShareUpdate = mapComponentUpdate ShareModel ShareMsg
+mapUploadUpdate = mapComponentUpdate UploadModel UploadMsg
+mapCreateDirUpdate = mapComponentUpdate CreateDirModel CreateDirMsg
 
 -- View
 view : Model -> Html Msg
 view model =
   let
-    contents = case model.viewModel of
-      FolderModel viewModel -> Html.map FolderMsg (Views.Folder.render viewModel)
-      ShareModel viewModel -> Html.map ShareMsg (Views.Share.render viewModel)
-          -- Share file source -> SharePrompt.render ShareMsg file source
-          -- Shared result ->
-            -- div
-              -- []
-              -- [ div [] [text "Email has been sent"] ]
-          -- Sharing file email -> div [] [text "Sharing it"]
-          -- FailedShare reason -> div [] [text "Failed it"]
-          -- Menu -> Menu.render model.path
-
+    contents = case model.componentModel of
+      FolderModel componentModel -> Html.map FolderMsg (Views.Folder.render componentModel)
+      ShareModel componentModel -> Html.map ShareMsg (Views.Share.render componentModel)
+      UploadModel componentModel -> Html.map UploadMsg (Views.Upload.render componentModel)
+      CreateDirModel componentModel -> Html.map CreateDirMsg (Views.CreateDir.render componentModel)
       ErrorModel reason -> div [] [text reason]
   in
     div [ withId Container ] [ contents ]

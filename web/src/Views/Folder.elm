@@ -2,7 +2,7 @@ module Views.Folder exposing (render, update, Model, Msg, initialModel, loadFile
 
 import Service
 import Files
-import Html exposing (Html, div, span, text, a)
+import Html exposing (Html, div, span, text, a, ul, li)
 import Html.Attributes exposing (style, classList, href)
 import Html.Events exposing (onClick, onSubmit)
 import FontAwesome.Web as FontAwesome
@@ -19,6 +19,10 @@ type Msg
   | DirectoryFetchFailed Http.Error
   | ShowMenu
   | HideMenu
+
+type MenuLink
+  = Upload String
+  | CreateDirectory String
 
 type Files
   = NotLoaded
@@ -51,14 +55,13 @@ update model msg =
 
 fetchCmd: String -> Cmd Msg
 fetchCmd path =
-  Http.send (ResultsExtended.mapAll DirectoryFetchFailed DirectoryFetched) (Service.fetchFiles path)
+  Http.send (ResultsExtended.unwrapToType DirectoryFetchFailed DirectoryFetched) (Service.fetchFiles path)
 
 loadFiles : Files.FilePath -> (Model, Cmd Msg)
-loadFiles path =
-  ( loadingModel path, fetchCmd path )
+loadFiles path = ( loadingModel path, fetchCmd path )
 
-renderFileHeader: Model -> Html Msg
-renderFileHeader model =
+renderHeader: Model -> Html Msg
+renderHeader model =
   let
     menuAction = if model.menuActive == True then HideMenu else ShowMenu
   in
@@ -73,6 +76,23 @@ renderFileHeader model =
           [FontAwesome.navicon]
         ]
       ]
+
+menuLinkTo : MenuLink -> Html Msg
+menuLinkTo link =
+  let
+    (linkText, url) = case link of
+      Upload directory -> ("Upload File", AddressableStates.generateUploadAddress directory)
+      CreateDirectory directory -> ("Create Directroy", AddressableStates.generateCreateAddress directory)
+  in a [ href url ] [ text linkText]
+
+renderMenu: Files.FilePath -> Html Msg
+renderMenu directory =
+  div [ Css.withClass Css.MenuHeader ]
+    [ ul [ Css.withClass Css.MenuList ]
+      [ li [] [menuLinkTo <| Upload directory]
+      , li [] [menuLinkTo <| CreateDirectory directory]
+      ]
+    ]
 
 renderFile: String -> Service.File -> Html Msg
 renderFile currentDir file =
@@ -119,7 +139,10 @@ renderFiles files currentDir =
 
 render : Model -> Html Msg
 render model =
-  div []
-    [ renderFileHeader model
-    , renderFiles model.files model.path
-    ]
+  let
+    content = if model.menuActive then renderMenu model.path else renderFiles model.files model.path
+  in
+    div []
+      [ renderHeader model
+      , content
+      ]

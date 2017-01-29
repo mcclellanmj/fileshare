@@ -35,7 +35,7 @@ type Msg
   | ShareFinished ShareResult
 
 shareCmd: String -> String -> Cmd Msg
-shareCmd path email = Http.send (ResultsExtended.mapAll ShareFailed ShareFinished ) (Service.shareFile path email)
+shareCmd path email = Http.send (ResultsExtended.unwrapToType ShareFailed ShareFinished ) (Service.shareFile path email)
 
 load : FilePath -> FilePath -> (Model, Cmd Msg)
 load toShare source =

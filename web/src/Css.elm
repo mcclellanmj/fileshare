@@ -15,6 +15,8 @@ type CssClass
   | MenuLink
   | MenuActive
   | TextDanger
+  | MenuList
+  | MenuHeader
 
 type Id
   = Container
@@ -46,6 +48,8 @@ classString clazz =
     MenuLink -> "menu-link"
     MenuActive -> "menu-active"
     TextDanger -> "text-danger"
+    MenuHeader -> "menu-header"
+    MenuList -> "menu-list"
 
 withClass : CssClass -> Attribute msg
 withClass clazz = Attr.class (classString clazz)
