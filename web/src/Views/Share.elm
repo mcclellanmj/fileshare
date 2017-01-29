@@ -7,7 +7,7 @@ import Service exposing (File)
 import AttributesExtended as AttrExt
 import FontAwesome.Web as Icons
 import Pure
-import UI.Colors as Colors
+import UI.Components as Components
 import Css as ShareCss
 import AddressableStates as States
 import Files exposing (FilePath)
@@ -50,21 +50,6 @@ update shareData shareMsg =
     ShareFailed error -> ({ shareData | state = Failed error }, Cmd.none)
     ShareFinished result -> ({ shareData | state = Finished result }, Cmd.none)
 
-shareHeader: String -> String -> Html a
-shareHeader source title =
-  div [style [("display", "flex"), ("background-color", "black"), ("padding", "5px"), ("color", "white")]]
-    [ span [] [text title]
-    , a
-      [ href (States.generateFolderAddress source)
-      , style
-        [ ("margin-left", "auto")
-        , ("color", Colors.dangerText)
-        ]
-      , ShareCss.withClass ShareCss.TextDanger
-      ]
-      [ Icons.close ]
-    ]
-
 render: Model -> Html Msg
 render model =
   let
@@ -94,7 +79,7 @@ render model =
   in
     div
       []
-      [ shareHeader model.return ("Share: " ++ model.sharing)
+      [ Components.closeableHeader ("Share: " ++ model.sharing) <| States.generateFolderAddress model.return
       , contents
       ]
 

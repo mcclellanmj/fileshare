@@ -1,8 +1,10 @@
 module Views.Upload exposing (load, update, Msg, Model, render)
 
 import Files
-import Html exposing (Html)
+import Html exposing (Html, div)
 import Debug
+import UI.Components as Components
+import AddressableStates
 
 type Msg
   = DoUpload
@@ -20,4 +22,7 @@ update model msg =
     DoUpload -> Debug.crash "DoUpload is not yet implemented"
 
 render : Model -> Html Msg
-render model = Debug.crash "Render is not yet implemented"
+render model =
+  div
+    []
+    [ Components.closeableHeader "Upload File" <| AddressableStates.generateFolderAddress model.targetDir ]

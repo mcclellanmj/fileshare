@@ -76,3 +76,10 @@ a.action, a.action:visited {
   margin-left: auto;
   color: #DD2121;
 }
+
+.closeable-header {
+  display: flex;
+  background-color: black;
+  padding: 5px;
+  color: white;
+}

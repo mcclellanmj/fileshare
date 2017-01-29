@@ -17,6 +17,7 @@ type CssClass
   | TextDanger
   | MenuList
   | MenuHeader
+  | CloseableHeader
 
 type Id
   = Container
@@ -50,6 +51,7 @@ classString clazz =
     TextDanger -> "text-danger"
     MenuHeader -> "menu-header"
     MenuList -> "menu-list"
+    CloseableHeader -> "closeable-header"
 
 withClass : CssClass -> Attribute msg
 withClass clazz = Attr.class (classString clazz)
