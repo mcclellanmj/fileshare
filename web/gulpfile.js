@@ -23,7 +23,7 @@ gulp.task('copy-css', function() {
 
 gulp.task('elm-init', elm.init);
 gulp.task('js', ['elm-init'], function() {
-  return gulp.src('src/Main.elm').pipe(elm.bundle('app.min.js')).pipe(uglify()).pipe(gulp.dest('dist/'));
+  return gulp.src('src/Main.elm').pipe(elm.bundle('app.min.js', {warn: true, debug: true})).pipe(uglify()).pipe(gulp.dest('dist/'));
 });
 
 gulp.task('css', ['copy-css'], function() {

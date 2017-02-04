@@ -1,15 +1,8 @@
-import Html.Attributes exposing (href, style, src, classList)
-import Html.Events exposing (onClick, onSubmit)
 import Html exposing (Html, Attribute, div, h1, input, text, ul, li, a, span, img, textarea)
 import Task
-import Http exposing (Error)
-import Service exposing (File, ShareResult, fetchFiles)
 import Navigation
 import AddressableStates exposing (AddressableState(..))
-import AttributesExtended
-import FontAwesome.Web as FontAwesome
 import Css exposing (withClass, withClasses, CssClass(..), withId, Id(..))
-import Menu
 import Views.Share
 import Views.Folder
 import Views.Upload
@@ -40,6 +33,7 @@ type Msg
   | UrlChange Navigation.Location
 
 -- Service
+main : Program Never Model Msg
 main =
   Navigation.program UrlChange
     { init = init
@@ -48,7 +42,7 @@ main =
     , subscriptions = \_ -> Sub.none
     }
 
-urlUpdate: Model -> Navigation.Location -> (Model, Cmd Msg)
+urlUpdate : Model -> Navigation.Location -> (Model, Cmd Msg)
 urlUpdate model newLocation =
   case AddressableStates.decode newLocation of
     Nothing -> ({ model | componentModel = ErrorModel ("Unknown url [" ++ String.dropLeft 1 newLocation.hash ++ "]") }, Cmd.none)
@@ -86,9 +80,16 @@ mapComponentUpdate : (a -> ComponentModel) -> (b -> Msg) -> Model -> (a, Cmd b) 
 mapComponentUpdate viewFn msgFn model (componentModel, viewCmd) =
   ({ model | componentModel = viewFn componentModel }, Cmd.map msgFn viewCmd )
 
+mapFolderUpdate : Model -> ( Views.Folder.Model, Cmd Views.Folder.Msg ) -> ( Model, Cmd Msg )
 mapFolderUpdate = mapComponentUpdate FolderModel FolderMsg
+
+mapShareUpdate : Model -> ( Views.Share.Model, Cmd Views.Share.Msg ) -> ( Model, Cmd Msg )
 mapShareUpdate = mapComponentUpdate ShareModel ShareMsg
+
+mapUploadUpdate : Model -> ( Views.Upload.Model, Cmd Views.Upload.Msg ) -> ( Model, Cmd Msg )
 mapUploadUpdate = mapComponentUpdate UploadModel UploadMsg
+
+mapCreateDirUpdate : Model -> ( Views.CreateDir.Model, Cmd Views.CreateDir.Msg ) -> ( Model, Cmd Msg )
 mapCreateDirUpdate = mapComponentUpdate CreateDirModel CreateDirMsg
 
 -- View
