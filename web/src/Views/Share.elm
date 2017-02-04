@@ -15,7 +15,7 @@ import Service exposing (ShareResult)
 import Http
 import Task
 import Errors
-import ResultsExtended
+import Result.Extra
 
 type State
   = Input
@@ -35,7 +35,7 @@ type Msg
   | ShareFinished ShareResult
 
 shareCmd: String -> String -> Cmd Msg
-shareCmd path email = Http.send (ResultsExtended.unwrapToType ShareFailed ShareFinished ) (Service.shareFile path email)
+shareCmd path email = Http.send (Result.Extra.unpack ShareFailed ShareFinished) (Service.shareFile path email)
 
 load : FilePath -> FilePath -> (Model, Cmd Msg)
 load toShare source =

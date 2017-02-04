@@ -11,7 +11,7 @@ import Errors
 import Http
 import AddressableStates
 import AttributesExtended
-import ResultsExtended
+import Result.Extra
 import Task
 
 type Msg
@@ -55,7 +55,7 @@ update model msg =
 
 fetchCmd: String -> Cmd Msg
 fetchCmd path =
-  Http.send (ResultsExtended.unwrapToType DirectoryFetchFailed DirectoryFetched) (Service.fetchFiles path)
+  Http.send (Result.Extra.unpack DirectoryFetchFailed DirectoryFetched) (Service.fetchFiles path)
 
 loadFiles : Files.FilePath -> (Model, Cmd Msg)
 loadFiles path = ( loadingModel path, fetchCmd path )
