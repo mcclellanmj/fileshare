@@ -1,4 +1,5 @@
 - Complete the upload function
+- Remote the Files.elm file and replace with Path.elm
 - Make menu slide out
 - Clean up the package.json/bower.json and remove no longer used libraries
 - Error Message screen needs to be more informative and provide a path back
