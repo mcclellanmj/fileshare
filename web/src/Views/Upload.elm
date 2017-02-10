@@ -34,7 +34,7 @@ renderFile file =
 
 renderFileStatus : Model -> Html Msg
 renderFileStatus model =
-  div [] <| List.map renderFile model.selectedFiles
+  div [] (List.map renderFile model.selectedFiles)
 
 renderUploadForm : Model -> Html Msg
 renderUploadForm model =
