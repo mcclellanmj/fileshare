@@ -5,6 +5,7 @@ import Html exposing (Html, div)
 import Debug
 import UI.Components as Components
 import AddressableStates
+import FileReader exposing (NativeFile)
 
 type Msg
   = DoUpload
