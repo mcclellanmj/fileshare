@@ -39,7 +39,7 @@ main =
     { init = init
     , update = update
     , view = view
-    , subscriptions = \_ -> Sub.none
+    , subscriptions = subscriptions
     }
 
 urlUpdate : Model -> Navigation.Location -> (Model, Cmd Msg)
@@ -91,6 +91,13 @@ mapUploadUpdate = mapComponentUpdate UploadModel UploadMsg
 
 mapCreateDirUpdate : Model -> ( Views.CreateDir.Model, Cmd Views.CreateDir.Msg ) -> ( Model, Cmd Msg )
 mapCreateDirUpdate = mapComponentUpdate CreateDirModel CreateDirMsg
+
+-- Subscriptions
+subscriptions : Model -> Sub Msg
+subscriptions model =
+  case model.componentModel of
+    UploadModel componentModel -> Sub.map UploadMsg (Views.Upload.subscriptions componentModel)
+    _ -> Sub.none
 
 -- View
 view : Model -> Html Msg

@@ -1,13 +1,18 @@
 module Service exposing (..)
 
 import Http
-import Json.Decode exposing (Decoder, string, map2, map4, bool, int, list, field)
+import Json.Decode exposing (Decoder, string, map, map2, map4, bool, int, list, field)
 import Json.Encode as JEncode
 import Task exposing (Task)
+import FileReader
 
 type alias ShareResult =
   { uuid: String
   , url: String
+  }
+
+type alias UploadResult =
+  { name: String
   }
 
 type alias File =
@@ -34,12 +39,26 @@ shareFile path email =
   in
     Http.post url (Http.stringBody "application/json" (createShareJson path email)) parseShare
 
+uploadFile: String -> FileReader.NativeFile -> Http.Request UploadResult
+uploadFile path file =
+  let
+    body = Http.multipartBody
+      [ Http.stringPart "part1" "something"
+      , FileReader.filePart "upload-file" file
+      ]
+  in
+    Http.post "/add-file" body parseUpload
+
 fetchFiles: String -> Http.Request (List File)
 fetchFiles path =
   let
     url = "/view?folder_path=" ++ Http.encodeUri path
   in
     Http.get url parseFiles
+
+parseUpload: Decoder UploadResult
+parseUpload =
+  map UploadResult (field "name" string)
 
 parseShare: Decoder ShareResult
 parseShare =

@@ -12,7 +12,6 @@ import Http
 import AddressableStates
 import AttributesExtended
 import Result.Extra
-import Task
 
 type Msg
   = DirectoryFetched (List Service.File)
