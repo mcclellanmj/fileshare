@@ -1,5 +1,2 @@
-elm-stuff
 dist
-node_modules/
-build
-bower_components/
+node_modules
