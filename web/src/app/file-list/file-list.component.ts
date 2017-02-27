@@ -15,6 +15,9 @@ export class FileListComponent implements OnInit {
   ngOnInit() {
     this.fileSharingService
       .getFiles(this.directory)
-      .then(files => this.files = files)
+      .then(files => {
+        console.log("Files!", files);
+        this.files = files;
+      })
   }
 }

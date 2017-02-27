@@ -18,12 +18,14 @@ export class FileSharingService {
 
     return this.http.get(this.fileListUrl, options)
                .toPromise()
-               .then(response => response.json().data as File[])
+               .then(response => {
+                 return response.json() as File[];
+               })
                .catch(this.handleError);
   }
 
   private handleError(error: any): Promise<any> {
-    console.error('An error occured', error);
+    console.error('error during http', error);
     return Promise.reject(error.message || error);
   }
 }
