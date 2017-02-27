@@ -8,6 +8,4 @@ import { FileSharingService } from './file-sharing.service';
   providers: [FileSharingService]
 })
 
-export class AppComponent {
-  title = 'app works!';
-}
+export class AppComponent { }

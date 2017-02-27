@@ -9,13 +9,12 @@ import {FileSharingService} from '../file-sharing.service';
 export class FileListComponent implements OnInit {
   @Input() directory: string;
   files: File[] = [];
-  private readonly fileSharingService : FileSharingService;
 
-  constructor(private _fileSharingService: FileSharingService) {
-    this.fileSharingService = _fileSharingService;
-  }
+  constructor(private fileSharingService: FileSharingService) {}
 
   ngOnInit() {
+    this.fileSharingService
+      .getFiles(this.directory)
+      .then(files => this.files = files)
   }
-
 }
