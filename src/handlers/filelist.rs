@@ -18,14 +18,26 @@ use http::Params;
 use database::ShareDatabase;
 use database::ShareResult::*;
 
-use rustc_serialize::json;
+use rustc_serialize::{json, Encodable, Encoder};
 
-#[derive(RustcDecodable, RustcEncodable)]
 struct FileDetails {
     short_name: String,
     full_path: String,
     is_folder: bool,
     size: u64
+}
+
+impl Encodable for FileDetails {
+    fn encode<S: Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
+        s.emit_struct("FileDetails", 1, |x| {
+            try!(x.emit_struct_field("shortName", 0, |s| self.short_name.encode(s)));
+            try!(x.emit_struct_field("fullPath", 1, |s| self.full_path.encode(s)));
+            try!(x.emit_struct_field("isFolder", 2, |s| self.is_folder.encode(s)));
+            try!(x.emit_struct_field("size", 3, |s| self.size.encode(s)));
+
+            Ok(())
+        })
+    }
 }
 
 impl FileDetails {
