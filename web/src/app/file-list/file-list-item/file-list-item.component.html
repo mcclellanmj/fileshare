@@ -1,0 +1,13 @@
+<div class="row">
+  <div class="icon-wrapper">
+    <span class="fa-stack fa-lg" [ngClass]="{ 'folder-item': file.isFolder, 'file-item': !file.isFolder }">
+      <i class="fa fa-circle fa-stack-2x"></i>
+      <i class="fa fa-stack-1x" [ngClass]="{ 'fa-folder': file.isFolder, 'fa-file': !file.isFolder }"></i>
+    </span>
+  </div>
+
+  <div class="file-info">
+    <div class="file-name">{{ file.shortName }}</div>
+    <div class="file-size">{{ file.size }} </div>
+  </div>
+</div>

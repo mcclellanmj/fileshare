@@ -1,0 +1,33 @@
+.folder-item > .fa-circle {
+  color: lightblue;
+}
+
+.file-item > .fa-circle {
+  color: orange;
+}
+
+.fa-folder {
+  color: yellow;
+}
+
+.fa-file {
+  color: white;
+}
+
+.file-info {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.file-name {
+  font-size: 22px;
+}
+
+.file-size {
+  font-size: 12px;
+}
+
+.icon-wrapper {
+  display: inline-block;
+  vertical-align: middle;
+}
