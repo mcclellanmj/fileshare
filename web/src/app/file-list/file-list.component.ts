@@ -1,5 +1,9 @@
 import {Component, OnInit, Input} from '@angular/core';
 import {FileSharingService} from '../file-sharing.service';
+import { ActivatedRoute, Params } from '@angular/router';
+
+import 'rxjs/add/operator/switchMap';
+
 
 @Component({
   selector: 'app-file-list',
@@ -7,17 +11,21 @@ import {FileSharingService} from '../file-sharing.service';
   styleUrls: ['./file-list.component.css']
 })
 export class FileListComponent implements OnInit {
-  @Input() directory: string;
+  directory: string;
+  private sub: any;
   files: File[] = [];
 
-  constructor(private fileSharingService: FileSharingService) {}
+  constructor(private fileSharingService: FileSharingService, private route: ActivatedRoute) {}
 
   ngOnInit() {
-    this.fileSharingService
-      .getFiles(this.directory)
-      .then(files => {
-        console.log("Files!", files);
-        this.files = files;
-      })
+    this.route.params
+      .switchMap((params: Params) => {
+        this.directory = params['directory'];
+        return this.fileSharingService.getFiles(params['directory']);
+      }).
+    subscribe((files: File[]) => {
+      console.log("Files are", files);
+      this.files = files;
+    })
   }
 }
