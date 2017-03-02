@@ -6,12 +6,14 @@ import { HttpModule } from '@angular/http';
 import { AppComponent } from './app.component';
 import { FileListComponent } from './file-list/file-list.component';
 import { FileListItemComponent } from './file-list/file-list-item/file-list-item.component';
+import { NavBarComponent } from './file-list/nav-bar/nav-bar.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     FileListComponent,
-    FileListItemComponent
+    FileListItemComponent,
+    NavBarComponent
   ],
   imports: [
     BrowserModule,
