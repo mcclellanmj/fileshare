@@ -1,13 +1,16 @@
 <div class="row">
   <div class="icon-wrapper">
-    <span class="fa-stack fa-lg" [ngClass]="{ 'folder-item': file.isFolder, 'file-item': !file.isFolder }">
+    <span class="fa-stack fa-lg {{containerClass}}">
       <i class="fa fa-circle fa-stack-2x"></i>
-      <i class="fa fa-stack-1x" [ngClass]="{ 'fa-folder': file.isFolder, 'fa-file': !file.isFolder }"></i>
+      <i class="fa fa-stack-1x {{iconClass}}"></i>
     </span>
   </div>
 
   <div class="file-info">
-    <div class="file-name"><a [routerLink]="['/filelist', file.fullPath]">{{ file.shortName }}</a></div>
+    <div class="file-name">
+      <a *ngIf="file.isFolder" [routerLink]="link">{{ file.shortName }}</a>
+      <a *ngIf="!file.isFolder" [attr.href]="link">{{ file.shortName }}</a>
+    </div>
     <div class="file-size">{{ file.size }} </div>
   </div>
 </div>

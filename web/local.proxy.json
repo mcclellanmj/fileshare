@@ -2,5 +2,9 @@
    "/view": {
       "target": "http://localhost:3000",
       "secure": false
-   }
+   },
+  "/download": {
+      "target": "http://localhost:3000",
+      "secure": false
+  }
 }
