@@ -27,6 +27,7 @@ type alias FileUpload =
   , status: UploadStatus
   }
 
+-- FIXME: See if this can be done with lists instead of Array because array is clunky
 type alias UploadingState =
   { curIndex: Int
   , files: Array.Array FileUpload

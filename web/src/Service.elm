@@ -66,16 +66,16 @@ parseFiles =
 parseUploadResult: Decoder UploadResult
 parseUploadResult =
   Json.Decode.map UploadResult
-    (field "fullPat" string)
+    (field "fullPath" string)
 
 uploadFile: String -> NativeFile -> Http.Request UploadResult
 uploadFile filename file =
   let
     body =
       Http.multipartBody
-        [ Http.stringPart "part1" "42"
+        [ Http.stringPart "filename" filename
         , FileReader.filePart "simtest" file
         ]
   in
-    Http.post "http://localhost:5000/upload" body parseUploadResult
+    Http.post "/upload" body parseUploadResult
 
