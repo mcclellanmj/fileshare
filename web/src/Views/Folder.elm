@@ -73,7 +73,8 @@ renderHeader model =
           , onClick menuAction
           , classList [("menu-link", True), ("menu-active", model.menuActive == True)]
           ]
-          [FontAwesome.navicon]
+          -- [FontAwesome.navicon]
+          [text "menu"]
         ]
       ]
 

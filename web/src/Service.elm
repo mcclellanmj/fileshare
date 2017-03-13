@@ -4,10 +4,15 @@ import Http
 import Json.Decode exposing (Decoder, string, map2, map4, bool, int, list, field)
 import Json.Encode as JEncode
 import Task exposing (Task)
+import FileReader exposing (NativeFile)
 
 type alias ShareResult =
   { uuid: String
   , url: String
+  }
+
+type alias UploadResult =
+  { fullpath: String
   }
 
 type alias File =
@@ -57,3 +62,20 @@ parseFiles =
       (field "size" int)
   in
     list file
+
+parseUploadResult: Decoder UploadResult
+parseUploadResult =
+  Json.Decode.map UploadResult
+    (field "fullPat" string)
+
+uploadFile: String -> NativeFile -> Http.Request UploadResult
+uploadFile filename file =
+  let
+    body =
+      Http.multipartBody
+        [ Http.stringPart "part1" "42"
+        , FileReader.filePart "simtest" file
+        ]
+  in
+    Http.post "http://localhost:5000/upload" body parseUploadResult
+

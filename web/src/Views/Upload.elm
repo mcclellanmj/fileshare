@@ -1,17 +1,18 @@
-module Views.Upload exposing (load, update, Msg, Model, render)
+module Views.Upload exposing (load, update, Msg, Model, render, subscriptions)
 
 import Files
 import Html exposing (Html, div, h1, text, input)
-import Html.Attributes exposing (type_, multiple)
+import Html.Attributes exposing (type_, multiple, classList)
 import Html.Events
+import Pure
 import UI.Components as Components
 import AddressableStates
 import FileReader exposing (NativeFile, parseSelectedFiles)
 import Json.Decode as Json exposing (Value, andThen)
 import Http.Progress
-import Task
 import Array
 import List.Extra
+import Task
 
 import Service
 
@@ -27,30 +28,29 @@ type alias FileUpload =
   }
 
 type alias UploadingState =
-  { curIndex: Maybe Int
+  { curIndex: Int
   , files: Array.Array FileUpload
   }
 
 type Msg
   = SelectFiles (List NativeFile)
   | UploadFiles (List NativeFile)
-  | UploadFile Int
   | UploadProgress Int (Http.Progress.Progress Service.UploadResult)
-  | StartUpload NativeFile
+  | FinishedFile Int
 
 type ViewState
   = NoSelection
   | Selected (List NativeFile)
   | Uploading UploadingState
-  | FinishedUploading (List UploadingState)
+  | FinishedUploading UploadingState
 
 type alias Model =
   { targetDir: Files.FilePath
-  , selectedFiles: List NativeFile
+  , state: ViewState
   }
 
 load : Files.FilePath -> (Model, Cmd Msg)
-load path = ( { targetDir = path, selectedFiles = [] }, Cmd.none )
+load path = ( { targetDir = path, state = NoSelection }, Cmd.none )
 
 nativeToFileUpload : NativeFile -> FileUpload
 nativeToFileUpload f =
@@ -62,20 +62,53 @@ getNextUpload : Array.Array FileUpload -> Maybe Int
 getNextUpload files =
   List.Extra.findIndex (\x -> x.status == NotStarted) (Array.toList files)
 
-handleFailed : UploadingState -> ViewState
-handleFailed uploadingState =
-  case getNextUpload uploadingState.files of
-    Nothing -> FinishedUploading (Array.toList uploadingState.files)
-    Just x -> Uploading { curIndex = x, files = uploadingState.files }
+markIndexFail : Int -> Array.Array FileUpload -> Array.Array FileUpload
+markIndexFail index files =
+  let
+    fileAtIndex = Array.get index files
+    updatedFiles =
+      case fileAtIndex of
+        Just x -> Just { x | status = Failed}
+        Nothing -> Nothing
+  in
+    case updatedFiles of
+      Just x -> Array.set index x files
+      Nothing -> Debug.crash "Was not able to find file at index"
+
+toNextUploadState : UploadingState -> ViewState
+toNextUploadState currentState =
+  case getNextUpload currentState.files of
+    Just nextIdx -> Uploading { currentState | curIndex = nextIdx }
+    Nothing -> FinishedUploading currentState
+
+handleFailedUpload : UploadingState -> UploadingState
+handleFailedUpload uploadingState =
+  let
+    updatedFiles = markIndexFail uploadingState.curIndex uploadingState.files
+  in
+    { uploadingState | files = updatedFiles }
+
+setIndexInProgress : Int -> Array.Array FileUpload -> Array.Array FileUpload
+setIndexInProgress index files =
+  let
+    updatedFile = case Array.get index files of
+      Just x -> { x | status = InProgress 0 }
+      Nothing -> Debug.crash "Unable to find file at index"
+  in
+    Array.set index updatedFile files
 
 createInitialUploading : List NativeFile -> UploadingState
 createInitialUploading allFiles =
   let
     filesWithStatus = Array.fromList (List.map nativeToFileUpload allFiles)
+    curIndex = getNextUpload filesWithStatus
   in
-    { curIndex = getNextUpload filesWithStatus
-    , files = filesWithStatus
-    }
+    case curIndex of
+      Just x ->
+        { curIndex = x
+        , files = setIndexInProgress x filesWithStatus
+        }
+      Nothing -> Debug.crash "Cannot start upload"
 
 update : Model -> Msg -> (Model, Cmd Msg)
 update model msg =
@@ -83,36 +116,36 @@ update model msg =
     SelectFiles x -> ( { model | state = Selected x }, Cmd.none )
     UploadFiles x -> ( { model | state = Uploading (createInitialUploading x) }, Cmd.none )
 
-    UploadProgress idx (Http.Progress.Done x) ->
-      case model.state of
-        Uploading uploadingState -> ( model, Cmd.none )
-        _ -> ( model, Cmd.none )
-
-    UploadProgress idx (Http.Progress.Some x) ->
-      let
-        _ = Debug.log(toString x.bytes)
-      in
-        (model, Cmd.none)
+    UploadProgress idx (Http.Progress.Done x) -> Debug.crash ("Done progress not implemented yet")
+    UploadProgress idx (Http.Progress.Some x) -> Debug.crash ("Some prgress not implemented yet")
 
     UploadProgress idx (Http.Progress.Fail x) ->
       case model.state of
         Uploading uploadingState ->
-          ( { model | state = Uploading (List.head toUpload, Maybe.withDefault [] (List.tail toUpload)) }, Cmd.none )
-        _ -> (model, Cmd.none)
+          ( { model | state = Uploading (handleFailedUpload uploadingState) }, Task.perform (FinishedFile) (Task.succeed idx))
+        _ -> Debug.crash "Upload progress failed but got somewhere weird"
 
-    UploadProgress _ _ -> Debug.crash("nothing yet")
+    FinishedFile idx ->
+      case model.state of
+        Uploading uploadingState ->
+          ( {model | state = toNextUploadState uploadingState }, Cmd.none )
+        _ -> Debug.crash "Finished a file but not in the uploading state"
+
+    UploadProgress idx (Http.Progress.None) -> Debug.crash "No Progress not implemented yet"
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
   case model.state of
     Uploading uploadStatus ->
-      case uploadStatus.curIndex of
-        Just i ->
-          case Array.get i uploadStatus.files of
-            Just file -> Service.uploadFile "testing" file.file |> Http.Progress.track "/add-file" (UploadProgress i)
-            Nothing -> Debug.crash "Tried to get an index which does not exist"
-        Nothing -> Sub.none
-    _ -> Sub.none
+      case Array.get uploadStatus.curIndex uploadStatus.files of
+        Just file ->
+          let
+            nextUpload = Debug.log "Next sub upload" file.file
+            index = Debug.log "Next index will be" uploadStatus.curIndex
+          in
+            Debug.log ("Subscribing") (Service.uploadFile nextUpload.name nextUpload |> Http.Progress.track ("/add-file" ++ toString index) (UploadProgress index))
+        Nothing -> Debug.crash "Tried to get an index which does not exist"
+    _ -> Debug.log ("got no subscriptions") Sub.none
 
 onchange : (List NativeFile -> value) -> Html.Attribute value
 onchange action = Html.Events.on "change" (Json.map action parseSelectedFiles)
@@ -131,7 +164,7 @@ renderUploadForm model =
   let
     extraContent = case model.state of
       Selected x ->
-        [ button
+        [ Html.button
           [ classList [(Pure.buttonPrimary, True)]
           , Html.Events.onClick (UploadFiles x)
           ]
@@ -147,7 +180,9 @@ renderUploadForm model =
         , multiple True
         ]
         []
-     ]
+      ]
+  in
+    div [] ( content ++ extraContent )
 
 render : Model -> Html Msg
 render model =
@@ -156,6 +191,7 @@ render model =
       NoSelection -> renderUploadForm model
       Selected x -> renderUploadForm model
       Uploading uploadStatus -> renderFileStatus uploadStatus
+      FinishedUploading files -> div [] [text "All Done"]
   in
     div []
       [ Components.closeableHeader "Upload File" <| AddressableStates.generateFolderAddress model.targetDir

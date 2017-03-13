@@ -39,8 +39,14 @@ main =
     { init = init
     , update = update
     , view = view
-    , subscriptions = \_ -> Sub.none
+    , subscriptions = subscriptions
     }
+
+subscriptions : Model -> Sub Msg
+subscriptions currentModel =
+  case currentModel.componentModel of
+    UploadModel uploadModel -> Sub.map UploadMsg (Views.Upload.subscriptions uploadModel)
+    _ -> Sub.none
 
 urlUpdate : Model -> Navigation.Location -> (Model, Cmd Msg)
 urlUpdate model newLocation =
