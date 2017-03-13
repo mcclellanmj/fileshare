@@ -83,3 +83,15 @@ a.action, a.action:visited {
   padding: 5px;
   color: white;
 }
+
+.file-upload-in-progress {
+  color: blue;
+}
+
+.file-upload-failed {
+  color: red;
+}
+
+.file-upload-finished {
+  color: green;
+}

@@ -12,9 +12,9 @@ import Json.Decode as Json exposing (Value, andThen)
 import Http.Progress
 import Array
 import List.Extra
-import Task
 
 import Service
+import Css
 
 type UploadStatus
   = NotStarted
@@ -36,7 +36,6 @@ type Msg
   = SelectFiles (List NativeFile)
   | UploadFiles (List NativeFile)
   | UploadProgress Int (Http.Progress.Progress Service.UploadResult)
-  | FinishedFile Int
 
 type ViewState
   = NoSelection
@@ -63,22 +62,26 @@ getNextUpload files =
   List.Extra.findIndex (\x -> x.status == NotStarted) (Array.toList files)
 
 markIndexFail : Int -> Array.Array FileUpload -> Array.Array FileUpload
-markIndexFail index files =
+markIndexFail index files = markIndex Failed index files
+
+markIndex: UploadStatus -> Int -> Array.Array FileUpload -> Array.Array FileUpload
+markIndex newStatus index files =
   let
     fileAtIndex = Array.get index files
-    updatedFiles =
+    updatedFile =
       case fileAtIndex of
-        Just x -> Just { x | status = Failed}
+        Just x -> Just { x | status = newStatus }
         Nothing -> Nothing
   in
-    case updatedFiles of
+    case updatedFile of
       Just x -> Array.set index x files
-      Nothing -> Debug.crash "Was not able to find file at index"
+      Nothing -> Debug.crash "Tried to update an impossible index"
+
 
 toNextUploadState : UploadingState -> ViewState
 toNextUploadState currentState =
   case getNextUpload currentState.files of
-    Just nextIdx -> Uploading { currentState | curIndex = nextIdx }
+    Just nextIdx -> Uploading { currentState | curIndex = nextIdx, files = markIndex (InProgress 0) nextIdx currentState.files }
     Nothing -> FinishedUploading currentState
 
 handleFailedUpload : UploadingState -> UploadingState
@@ -122,14 +125,8 @@ update model msg =
     UploadProgress idx (Http.Progress.Fail x) ->
       case model.state of
         Uploading uploadingState ->
-          ( { model | state = Uploading (handleFailedUpload uploadingState) }, Task.perform (FinishedFile) (Task.succeed idx))
+          ( { model | state = toNextUploadState <| handleFailedUpload uploadingState }, Cmd.none)
         _ -> Debug.crash "Upload progress failed but got somewhere weird"
-
-    FinishedFile idx ->
-      case model.state of
-        Uploading uploadingState ->
-          ( {model | state = toNextUploadState uploadingState }, Cmd.none )
-        _ -> Debug.crash "Finished a file but not in the uploading state"
 
     UploadProgress idx (Http.Progress.None) -> Debug.crash "No Progress not implemented yet"
 
@@ -140,19 +137,27 @@ subscriptions model =
       case Array.get uploadStatus.curIndex uploadStatus.files of
         Just file ->
           let
-            nextUpload = Debug.log "Next sub upload" file.file
-            index = Debug.log "Next index will be" uploadStatus.curIndex
+            nextUpload = file.file
+            index = uploadStatus.curIndex
           in
-            Debug.log ("Subscribing") (Service.uploadFile nextUpload.name nextUpload |> Http.Progress.track ("/add-file" ++ toString index) (UploadProgress index))
+            Service.uploadFile nextUpload.name nextUpload |> Http.Progress.track ("/add-file" ++ toString index) (UploadProgress index)
         Nothing -> Debug.crash "Tried to get an index which does not exist"
-    _ -> Debug.log ("got no subscriptions") Sub.none
+    _ -> Sub.none
 
 onchange : (List NativeFile -> value) -> Html.Attribute value
 onchange action = Html.Events.on "change" (Json.map action parseSelectedFiles)
 
 renderFile : FileUpload -> Html Msg
 renderFile upload =
-  div [] [text upload.file.name]
+  let
+    renderFileText: List (Html.Attribute a) -> String -> Html a
+    renderFileText attr fileText = div attr [text fileText]
+  in
+    case upload.status of
+      NotStarted -> renderFileText [] upload.file.name
+      InProgress x -> renderFileText [Css.withClass Css.FileUploadInProgress] (upload.file.name ++ " " ++ (toString x))
+      Failed -> renderFileText [Css.withClass Css.FileUploadFailed] upload.file.name
+      Finished -> renderFileText [Css.withClass Css.FileUploadFinished] upload.file.name
 
 renderFileStatus : UploadingState -> Html Msg
 renderFileStatus state =
@@ -191,7 +196,8 @@ render model =
       NoSelection -> renderUploadForm model
       Selected x -> renderUploadForm model
       Uploading uploadStatus -> renderFileStatus uploadStatus
-      FinishedUploading files -> div [] [text "All Done"]
+      -- FIXME: Should give some indication that it finished
+      FinishedUploading uploadStatus -> renderFileStatus uploadStatus
   in
     div []
       [ Components.closeableHeader "Upload File" <| AddressableStates.generateFolderAddress model.targetDir

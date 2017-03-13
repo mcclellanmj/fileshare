@@ -18,6 +18,9 @@ type CssClass
   | MenuList
   | MenuHeader
   | CloseableHeader
+  | FileUploadInProgress
+  | FileUploadFailed
+  | FileUploadFinished
 
 type Id
   = Container
@@ -52,6 +55,9 @@ classString clazz =
     MenuHeader -> "menu-header"
     MenuList -> "menu-list"
     CloseableHeader -> "closeable-header"
+    FileUploadInProgress -> "file-upload-in-progress"
+    FileUploadFailed -> "file-upload-failed"
+    FileUploadFinished -> "file-upload-finished"
 
 withClass : CssClass -> Attribute msg
 withClass clazz = Attr.class (classString clazz)
