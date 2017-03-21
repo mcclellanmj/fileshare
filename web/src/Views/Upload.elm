@@ -78,6 +78,9 @@ markIndex newStatus index files =
       Just x -> Array.set index x files
       Nothing -> Debug.crash "Tried to update an impossible index"
 
+setCurIndexState : UploadingState -> UploadStatus -> UploadingState
+setCurIndexState uploadingState newStatus =
+  { uploadingState | files = markIndex newStatus uploadingState.curIndex uploadingState.files }
 
 toNextUploadState : UploadingState -> ViewState
 toNextUploadState currentState =
@@ -101,6 +104,18 @@ setIndexInProgress index files =
   in
     Array.set index updatedFile files
 
+addProgress : UploadingState -> { bytes : Int, bytesExpected : Int} -> UploadingState
+addProgress uploadingState amount =
+  let
+    index = uploadingState.curIndex
+    amt = Debug.log ("Got progress of " ++ (toString amount.bytes) ++ " on file at index " ++ (toString index)) amount.bytes
+    updatedFile = case Array.get index uploadingState.files of
+      Just x -> { x | status = InProgress amt }
+      Nothing -> Debug.crash ("Unable to find file at index" ++ (toString index))
+    updatedArray = Array.set index updatedFile uploadingState.files
+  in
+    { uploadingState | files = updatedArray }
+
 createInitialUploading : List NativeFile -> UploadingState
 createInitialUploading allFiles =
   let
@@ -120,8 +135,20 @@ update model msg =
     SelectFiles x -> ( { model | state = Selected x }, Cmd.none )
     UploadFiles x -> ( { model | state = Uploading (createInitialUploading x) }, Cmd.none )
 
-    UploadProgress idx (Http.Progress.Done x) -> Debug.crash ("Done progress not implemented yet")
-    UploadProgress idx (Http.Progress.Some x) -> Debug.crash ("Some prgress not implemented yet")
+    UploadProgress idx (Http.Progress.Done x) ->
+      case model.state of
+        Uploading uploadingState ->
+          let
+            markedFinished = setCurIndexState uploadingState Finished
+          in
+            ( { model | state = toNextUploadState markedFinished }, Cmd.none)
+        _ -> Debug.crash "Cannot update state when not in an upload state"
+
+    UploadProgress idx (Http.Progress.Some amount) ->
+      case model.state of
+        Uploading uploadingState ->
+          ( { model | state = Uploading (addProgress uploadingState amount) }, Cmd.none )
+        _ -> Debug.crash "Cannot update state when not in an upload state"
 
     UploadProgress idx (Http.Progress.Fail x) ->
       case model.state of

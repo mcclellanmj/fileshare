@@ -23,6 +23,9 @@ mod login;
 pub use self::login::LoginFormHandler;
 pub use self::login::AuthenticateHandler;
 
+mod upload;
+pub use self::upload::UploadHandler;
+
 #[allow(dead_code)]
 pub struct StaticByteHandler {
     bytes: &'static [u8],

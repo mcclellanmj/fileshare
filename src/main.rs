@@ -1,4 +1,4 @@
-#![deny(warnings)]
+// #![deny(warnings)]
 #[macro_use]
 extern crate iron;
 extern crate iron_sessionstorage;
@@ -23,7 +23,7 @@ mod authorization;
 use iron::middleware::Chain;
 use iron::Iron;
 use router::Router;
-use handlers::{AuthenticateHandler, RedirectHandler, ShareHandler, SingleFileHandler, DownloadHandler, FilelistHandler, SharedFilelistHandler, ShareDownloadHandler, LoginFormHandler};
+use handlers::{UploadHandler, AuthenticateHandler, RedirectHandler, ShareHandler, SingleFileHandler, DownloadHandler, FilelistHandler, SharedFilelistHandler, ShareDownloadHandler, LoginFormHandler};
 use hyper::header::ContentType as HyperContent;
 use hyper::mime::{Mime, TopLevel, SubLevel, Attr, Value};
 use authorization::secured_handler;
@@ -59,6 +59,7 @@ fn main() {
     router.get("/view", secured_handler(FilelistHandler::new(root_folder.clone())));
     router.get("/download", secured_handler(DownloadHandler::new(root_folder.clone())));
     router.post("/share", secured_handler(ShareHandler::new(database.clone(), root_folder.clone())));
+    router.post("/upload", secured_handler(UploadHandler::new(root_folder.clone())));
 
     let mut request_chain = Chain::new(router);
     request_chain.link_around(SessionStorage::new(SignedCookieBackend::new(b"NotASecret".to_vec())));

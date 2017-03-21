@@ -66,7 +66,7 @@ parseFiles =
 parseUploadResult: Decoder UploadResult
 parseUploadResult =
   Json.Decode.map UploadResult
-    (field "fullPath" string)
+    (field "filepath" string)
 
 uploadFile: String -> NativeFile -> Http.Request UploadResult
 uploadFile filename file =
@@ -74,7 +74,7 @@ uploadFile filename file =
     body =
       Http.multipartBody
         [ Http.stringPart "filename" filename
-        , FileReader.filePart "simtest" file
+        , FileReader.filePart "file" file
         ]
   in
     Http.post "/upload" body parseUploadResult
