@@ -168,7 +168,7 @@ subscriptions model =
             nextUpload = file.file
             index = uploadStatus.curIndex
           in
-            Service.uploadFile nextUpload.name nextUpload |> Http.Progress.track ("/add-file" ++ toString index) (UploadProgress index)
+            Service.uploadFile model.targetDir nextUpload |> Http.Progress.track ("/add-file" ++ toString index) (UploadProgress index)
         Nothing -> Debug.crash "Tried to get an index which does not exist"
     _ -> Sub.none
 

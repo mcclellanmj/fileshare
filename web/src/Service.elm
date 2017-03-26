@@ -69,11 +69,11 @@ parseUploadResult =
     (field "filepath" string)
 
 uploadFile: String -> NativeFile -> Http.Request UploadResult
-uploadFile filename file =
+uploadFile filepath file =
   let
     body =
       Http.multipartBody
-        [ Http.stringPart "filename" filename
+        [ Http.stringPart "filepath" filepath
         , FileReader.filePart "file" file
         ]
   in

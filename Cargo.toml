@@ -12,7 +12,7 @@ url = "1.1"
 rusqlite = "0.7"
 rustc-serialize = "0.3"
 uuid = { version = "0.3", features = ["v4"] }
-lettre = { git = "https://github.com/lettre/lettre.git" }
+lettre = { git = "https://github.com/lettre/lettre.git", rev="90b00ae4ffc8828041160dc4cb579d53f4173c8e" }
 time = "0.1"
 liquid = "0.9"
 params = "0.5"
