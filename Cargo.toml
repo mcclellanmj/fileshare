@@ -4,15 +4,15 @@ version = "0.1.0"
 authors = ["Matt McClellan <mcclellan.mj@gmail.com>"]
 
 [dependencies]
-iron = "0.4"
-iron-sessionstorage = "0.5"
-hyper = "0.9"
-router = "0.2"
+iron = "0.5"
+iron-sessionstorage = "0.6"
+router = "0.5"
+hyper = "0.10"
 url = "1.1"
 rusqlite = "0.7"
 rustc-serialize = "0.3"
 uuid = { version = "0.3", features = ["v4"] }
-lettre = { git = "https://github.com/lettre/lettre.git" }
+lettre = "0.6"
 time = "0.1"
 liquid = "0.9"
-params = "0.5"
+params = "0.6.0"
