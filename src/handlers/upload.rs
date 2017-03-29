@@ -8,6 +8,7 @@ use iron::prelude::Plugin;
 use iron::headers::ContentType;
 
 use std::path::{Path, PathBuf};
+use std::fs::copy;
 
 use params::Params as IronParams;
 use params::Value as ParamValue;
@@ -41,7 +42,13 @@ impl UploadHandler {
     // FIXME: Temporary, these functions need their own class
     fn extract_file_from_parameter(param: &ParamValue) -> Result<&ParamFile, ParameterError> {
         match param {
-            &ParamValue::File(ref x) => Ok(x),
+            &ParamValue::File(ref x) => {
+                if x.filename.is_none() {
+                    Err(ParameterError::ValidationError("Missing filename".to_string()))
+                } else {
+                    Ok(x)
+                }
+            },
             _ => Err(ParameterError::InvalidType)
         }
     }
@@ -51,6 +58,15 @@ impl UploadHandler {
             &ParamValue::String(ref x) => Ok(x),
             _ => Err(ParameterError::InvalidType)
         }
+    }
+
+    fn copy_file_to_directory(parameterParts: (PathBuf, &ParamFile)) -> Result<(), ParameterError> {
+        let (filepath, file_param) = parameterParts;
+
+        // FIXME: Temporary to see if this works
+        copy(&file_param.path, filepath).unwrap();
+
+        Ok(())
     }
 }
 
@@ -67,7 +83,7 @@ impl Handler for UploadHandler {
 
                 filetools::is_child_of_safe(&self.root_folder, &file_path)
                     .map_err(|_| ParameterError::ValidationError("Path is not valid".to_string()))
-                    .map(|x| {
+                    .and_then(|x| {
                         match x {
                             true => Ok(file_path),
                             false => Err(ParameterError::ValidationError("Path is not a child of server root".to_string()))
@@ -75,14 +91,23 @@ impl Handler for UploadHandler {
                     })
             });
 
-        let param_file = filepath.and_then(|f| {
+        let params = filepath.and_then(|mut f| {
             let file_parameter = params.find(&["file"]);
 
             file_parameter.ok_or(ParameterError::MissingParameter("file".to_string()))
                 .and_then(UploadHandler::extract_file_from_parameter)
+                .map(|x| {
+                    let filename = x.clone().filename.unwrap();
+                    f.set_file_name(filename);
+                    (f, x)
+                })
         });
 
-        println!("{:?}", param_file);
+        let results = params
+            .and_then(UploadHandler::copy_file_to_directory);
+            // .and_then(UploadHandler::make_response);
+
+        println!("{:?}", results);
 
 
         // FIXME: Temporary until a later date

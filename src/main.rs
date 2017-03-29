@@ -64,5 +64,5 @@ fn main() {
     let mut request_chain = Chain::new(router);
     request_chain.link_around(SessionStorage::new(SignedCookieBackend::new(b"NotASecret".to_vec())));
 
-    Iron::new(request_chain).http("localhost:3000").unwrap();
+    Iron::new(request_chain).http("0.0.0.0:3000").unwrap();
 }
