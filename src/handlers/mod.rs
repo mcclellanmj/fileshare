@@ -26,6 +26,9 @@ pub use self::login::AuthenticateHandler;
 mod upload;
 pub use self::upload::UploadHandler;
 
+mod create_directory;
+pub use self::create_directory::CreateDirectoryHandler;
+
 #[allow(dead_code)]
 pub struct StaticByteHandler {
     bytes: &'static [u8],

@@ -68,6 +68,26 @@ parseUploadResult =
   Json.Decode.map UploadResult
     (field "filepath" string)
 
+createDirectoryJson: String -> String -> String
+createDirectoryJson base newDirectory =
+  let
+    createDirectoryJson = JEncode.object
+      [ ("base_path", JEncode.string base)
+      , ("new_directory", JEncode.string newDirectory)
+      ]
+  in
+    JEncode.encode 0 createDirectoryJson
+
+createDirectory: String -> String -> Http.Request ()
+createDirectory rootDirectory newDirectory =
+  let
+    url = "/create_directory"
+  in
+    Http.post url
+      ( Http.stringBody "application/json" (createDirectoryJson rootDirectory newDirectory))
+      (Json.Decode.null ())
+
+
 uploadFile: String -> NativeFile -> Http.Request UploadResult
 uploadFile filepath file =
   let

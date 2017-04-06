@@ -1,21 +1,57 @@
 module Views.CreateDir exposing (load, update, Msg, Model, render)
 
 import Files
-import Html exposing (Html)
+import Html exposing (Html, div, text, h1, input)
+import Html.Attributes as Attributes
 import Debug
+import Pure
+import Html.Events
+import Http
+import Result.Extra
+import Service
+import Navigation
+import AddressableStates
 
 type Msg
   = DoCreate String
+  | InputDirectoryName String
+  | CreateFinished ()
+  | CreateFailed Http.Error
 
-type alias Model = { targetDir: Files.FilePath }
+type alias Model =
+  { targetDir: Files.FilePath
+  , directoryName: String
+  , errors: Maybe Http.Error
+  }
 
 load : Files.FilePath -> (Model, Cmd Msg)
-load path = ( { targetDir = path }, Cmd.none )
+load path = ( { targetDir = path, directoryName = "", errors = Nothing }, Cmd.none )
+
+createCmd: String -> String -> Cmd Msg
+createCmd path email = Http.send (Result.Extra.unpack CreateFailed CreateFinished) (Service.createDirectory path email)
 
 update : Model -> Msg -> (Model, Cmd Msg)
 update model msg =
   case msg of
-    DoCreate dirName -> Debug.crash "DoCreate is not yet implemented"
+    DoCreate dirName -> ( model, createCmd model.targetDir model.directoryName)
+    InputDirectoryName dirName -> ( { model | directoryName = dirName }, Cmd.none )
+    CreateFinished _ -> ( model, Navigation.newUrl <| AddressableStates.generateFolderAddress model.targetDir)
+    CreateFailed error -> Debug.crash "Failed has not been implemented"
 
 render : Model -> Html Msg
-render model = Debug.crash "Render is not yet implemented"
+render model =
+  div []
+    [ h1 [] [ text "Create Directory" ]
+    , input
+        [ Attributes.type_ "text"
+        , Html.Events.onInput InputDirectoryName]
+        []
+    , div []
+        [ Html.button
+          [ Attributes.classList [(Pure.buttonPrimary, True)]
+          , Html.Events.onClick (DoCreate model.directoryName)
+          ]
+          [text "Create Directory"]
+        ]
+    ]
+

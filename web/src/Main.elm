@@ -55,7 +55,7 @@ urlUpdate model newLocation =
     Just (AddressableStates.Folder path) -> mapFolderUpdate model (Views.Folder.loadFiles path)
     Just (AddressableStates.Share toShare sourcePath) -> mapShareUpdate model (Views.Share.load toShare sourcePath)
     Just (AddressableStates.Upload toUploadTo) -> mapUploadUpdate model (Views.Upload.load toUploadTo)
-    Just (AddressableStates.CreateDir toCreateIn) -> ( { model | componentModel = ErrorModel "Create Not Implemented" }, Cmd.none)
+    Just (AddressableStates.CreateDir toCreateIn) -> mapCreateDirUpdate model (Views.CreateDir.load toCreateIn)
 
 update: Msg -> Model -> (Model, Cmd Msg)
 update msg model =
