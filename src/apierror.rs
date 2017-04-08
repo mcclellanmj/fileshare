@@ -64,8 +64,9 @@ macro_rules! apitry {
             ::std::result::Result::Err(err) => {
                 let from_err: apierror::ApiError = ::std::convert::From::from(err);
                 let payload = json::encode(&apierror::ErrorPayload::create(&from_err)).unwrap();
+                let headers = iron::modifiers::Header(iron::headers::ContentType::json());
 
-                return ::std::result::Result::Err(iron::IronError::new(from_err, ($status, payload)))
+                return ::std::result::Result::Err(iron::IronError::new(from_err, ($status, payload, headers)))
             }
         }
     };
