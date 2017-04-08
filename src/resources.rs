@@ -11,7 +11,7 @@ use std::io::Read;
 #[cfg(not(debug_assertions))] static APP_CSS: &'static [u8] = include_bytes!("../resources/app.min.css");
 #[cfg(not(debug_assertions))] static APP_JS: &'static [u8] = include_bytes!("../resources/app.min.js");
 #[cfg(not(debug_assertions))] static INDEX_HTML: &'static [u8] = include_bytes!("../resources/index.html");
-#[cfg(not(debug_assertions))] static LOGIN_TEMPLATE: &'static str = include_string!("../resources/login.html");
+#[cfg(not(debug_assertions))] static LOGIN_TEMPLATE: &'static str = include_str!("../resources/login.html");
 
 fn css_content_type() -> HyperContent {
     HyperContent(Mime(TopLevel::Text, SubLevel::Css, vec![(Attr::Charset, Value::Utf8)]))

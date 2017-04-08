@@ -1,3 +1,4 @@
+use iron;
 use iron::{Request, Response, IronResult};
 use iron::headers::ContentType;
 use iron::status;
@@ -19,6 +20,8 @@ use lettre::transport::sendmail::SendmailTransport;
 
 use http::headers::download_file_header;
 use http::Params;
+
+use apierror;
 
 use rustc_serialize::json;
 
@@ -69,8 +72,13 @@ impl Handler for ShareHandler {
         let serve_dir = self.root_folder.clone();
 
         let mut request_body = String::new();
-        req.body.read_to_string(&mut request_body).unwrap();
-        let share_request: ShareRequest = json::decode(&request_body).unwrap();
+        apitry!(req.body.read_to_string(&mut request_body),
+            "Unable to read request body",
+            status::BadRequest);
+
+        let share_request: ShareRequest = apitry!(json::decode(&request_body),
+            "Unable to parse JSON",
+            status::BadRequest);
 
         let filepath = {
             let path = Path::new(&share_request.full_path).to_owned();

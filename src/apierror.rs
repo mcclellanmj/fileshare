@@ -19,7 +19,7 @@ impl ErrorPayload {
 #[derive(Debug)]
 pub enum ApiError {
     BadInput(String),
-    AccessDenied(String)
+    IOError(String)
 }
 
 impl fmt::Display for ApiError {
@@ -28,7 +28,7 @@ impl fmt::Display for ApiError {
             // Both underlying errors already impl `Display`, so we defer to
             // their implementations.
             ApiError::BadInput(ref message) => write!(f, "BadInput: {}", message),
-            ApiError::AccessDenied(ref message) => write!(f, "AccessDenied: {}", message),
+            ApiError::IOError(ref message) => write!(f, "AccessDenied: {}", message),
         }
     }
 }
@@ -37,14 +37,14 @@ impl error::Error for ApiError {
     fn description(&self) -> &str {
         match *self {
             ApiError::BadInput(ref message) => message,
-            ApiError::AccessDenied(ref message) => message
+            ApiError::IOError(ref message) => message
         }
     }
 
     fn cause(&self) -> Option<&error::Error> {
         match *self {
             ApiError::BadInput(_) => None,
-            ApiError::AccessDenied(_) => None,
+            ApiError::IOError(_) => None
         }
     }
 }
@@ -52,6 +52,12 @@ impl error::Error for ApiError {
 impl From<rustc_serialize::json::DecoderError> for ApiError {
     fn from(err: rustc_serialize::json::DecoderError) -> Self {
         ApiError::BadInput(format!("Could not parse JSON. Caused by {}", err))
+    }
+}
+
+impl From<::std::io::Error> for ApiError {
+    fn from(err: ::std::io::Error) -> Self {
+        ApiError::IOError(format!("Error during IO: Caused by {}", err))
     }
 }
 
