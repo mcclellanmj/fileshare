@@ -1,21 +1,15 @@
 use std::sync::Arc;
 
-use iron::IronError;
+use iron;
 use iron::{Request, Response, IronResult};
 use iron::middleware::Handler;
-use iron::modifiers::Header;
 use iron::status;
-use iron::prelude::Plugin;
-use iron::headers::ContentType;
 
-use std::path::{Path, PathBuf};
-use std::fs::copy;
+use std::path::{PathBuf};
 use std::fs::create_dir;
 use std::io::Read;
 
-use params::Params as IronParams;
-use params::Value as ParamValue;
-use params::File as ParamFile;
+use apierror;
 
 use filetools;
 
@@ -41,7 +35,11 @@ impl Handler for CreateDirectoryHandler {
     fn handle(&self, req: &mut Request) -> IronResult<Response> {
         let mut request_body = String::new();
         req.body.read_to_string(&mut request_body).unwrap();
-        let create_directory_request: CreateDirectoryRequest = itry!(json::decode(&request_body));
+        let create_directory_request: CreateDirectoryRequest = apitry!(
+            json::decode(&request_body),
+            "Could not parse request json",
+            status::BadRequest
+        );
 
         let mut request_path = PathBuf::from(create_directory_request.base_path);
         request_path.push(create_directory_request.new_directory);

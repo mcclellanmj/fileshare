@@ -60,8 +60,8 @@ impl UploadHandler {
         }
     }
 
-    fn copy_file_to_directory(parameterParts: (PathBuf, &ParamFile)) -> Result<(), ParameterError> {
-        let (filepath, file_param) = parameterParts;
+    fn copy_file_to_directory(parameter_parts: (PathBuf, &ParamFile)) -> Result<(), ParameterError> {
+        let (filepath, file_param) = parameter_parts;
 
         // FIXME: Temporary to see if this works
         copy(&file_param.path, filepath).unwrap();

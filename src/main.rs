@@ -13,6 +13,8 @@ extern crate time;
 extern crate liquid;
 extern crate params;
 
+#[macro_use]
+mod apierror;
 mod filetools;
 mod http;
 mod handlers;
