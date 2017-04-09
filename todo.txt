@@ -1,3 +1,4 @@
+- The places where options use ok_or are quite common, make a macro
 - Add limit to size of response body I parse
 - Fix the unwraps, particularly in the is_child_of which can error out given any invalid path
 - The emailer service and other aspects should be configurable

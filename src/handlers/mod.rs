@@ -1,3 +1,4 @@
+use iron;
 use iron::middleware::Handler;
 use iron::{Request, Response, IronResult};
 use iron::headers::ContentType;
@@ -8,8 +9,12 @@ use std::path::{Path, PathBuf};
 use http::headers::download_file_header;
 use http::map_params;
 
+use rustc_serialize::json;
+
 use std::sync::Arc;
 use iron::status;
+
+use apierror;
 
 mod filelist;
 pub use self::filelist::FilelistHandler;
@@ -101,10 +106,10 @@ impl DownloadHandler {
 impl Handler for DownloadHandler {
     fn handle(&self, req: &mut Request) -> IronResult<Response> {
         let serve_dir = self.root_folder.clone();
-        let query = req.url.query();
+        let query = apitry!(req.url.query().ok_or(apierror::ApiError::BadInput("Missing url query segment".to_string())), status::BadRequest);
 
-        let filepath = query.and_then(|q| {
-            let params = form_urlencoded::parse(q.as_bytes());
+        let filepath = {
+            let params = form_urlencoded::parse(query.as_bytes());
             let param_map = map_params(params);
 
             let filenames = param_map.get("filename");
@@ -119,7 +124,7 @@ impl Handler for DownloadHandler {
                         None
                     }
                 })
-        });
+        };
 
         if let Some(f) = filepath {
             let download_header = Header(download_file_header(f.file_name().unwrap().to_str().unwrap()));
