@@ -72,19 +72,21 @@ impl Handler for ShareHandler {
         let serve_dir = self.root_folder.clone();
 
         let mut request_body = String::new();
-        apitry!(req.body.read_to_string(&mut request_body),
-            "Unable to read request body",
-            status::BadRequest);
+        apitry!(req.body.read_to_string(&mut request_body), status::BadRequest);
 
         let share_request: ShareRequest = apitry!(json::decode(&request_body),
-            "Unable to parse JSON",
             status::BadRequest);
 
         let filepath = {
             let path = Path::new(&share_request.full_path).to_owned();
 
             if path.exists() && filetools::is_child_of(&serve_dir, &path) {
-                Some(path.canonicalize().unwrap())
+                let absolute_path = apitry!(
+                    path.canonicalize(),
+                    status::InternalServerError
+                );
+
+                Some(absolute_path)
             } else {
                 None
             }
@@ -110,7 +112,7 @@ impl Handler for ShareHandler {
                 url: request_url.into_string()
             };
 
-            let response_json = json::encode(&response).unwrap();
+            let response_json = apitry!(json::encode(&response), "Failed to encode response");
             Ok(Response::with((status::Ok, response_json, headers)))
         } else {
             Ok(Response::with((status::BadRequest, "No valid file found in the filename param, ensure that filename is set on url parameters and that it is a valid file")))

@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use iron;
 use iron::{Request, Response, IronResult};
 use iron::middleware::Handler;
 use iron::headers::ContentType;
@@ -17,6 +18,8 @@ use http::Params;
 
 use database::ShareDatabase;
 use database::ShareResult::*;
+
+use apierror;
 
 use rustc_serialize::json;
 
@@ -109,35 +112,36 @@ impl Handler for SharedFilelistHandler {
         let url = request.url.clone().into_generic_url();
         let params = Params::new(&url);
 
+        let hash = apitry!(
+            params.get_first_param(&"hash".to_string())
+                  .ok_or(apierror::ApiError::BadInput("Missing required parameter: hash".to_string()))
+        );
+
         // Get the shared parameter and fetch it from the database
-        if let Some(hash) = params.get_first_param(&"hash".to_string()) {
-            let database = self.database.clone();
+        let database = self.database.clone();
 
-            match database.get_shared_by_hash(&hash) {
-                Missing => Ok(Response::with((status::BadRequest, "Invalid hash"))),
-                Expired => Ok(Response::with((status::BadRequest, "Share has expired"))),
-                Valid(ref x) => {
-                    let shared_path = Path::new(x).to_owned();
-                    let path = params.get_first_param(&"folder_path".to_string())
-                        .map(|y| Path::new(&y).to_owned())
-                        .or(Some(shared_path.clone()));
+        match database.get_shared_by_hash(&hash) {
+            Missing => Ok(Response::with((status::BadRequest, "Invalid hash"))),
+            Expired => Ok(Response::with((status::BadRequest, "Share has expired"))),
+            Valid(ref x) => {
+                let shared_path = Path::new(x).to_owned();
+                let path = params.get_first_param(&"folder_path".to_string())
+                    .map(|y| Path::new(&y).to_owned())
+                    .or(Some(shared_path.clone()));
 
-                    let folder = path.unwrap();
+                let folder = path.unwrap();
 
-                    if filetools::is_child_of(&shared_path, &folder) {
-                        if folder.is_dir() {
-                            let headers = Header(ContentType::json());
-                            Ok(Response::with((status::Ok, json_folder_listing(&folder), headers)))
-                        } else {
-                            Ok(Response::with((status::BadRequest, "Shared resource is not a directory")))
-                        }
+                if filetools::is_child_of(&shared_path, &folder) {
+                    if folder.is_dir() {
+                        let headers = Header(ContentType::json());
+                        Ok(Response::with((status::Ok, json_folder_listing(&folder), headers)))
                     } else {
-                        Ok(Response::with((status::BadRequest, "Cannot access files outside of shared directory")))
+                        Ok(Response::with((status::BadRequest, "Shared resource is not a directory")))
                     }
+                } else {
+                    Ok(Response::with((status::BadRequest, "Cannot access files outside of shared directory")))
                 }
             }
-        } else {
-            Ok(Response::with((status::BadRequest, "Invalid or Missing the hash")))
         }
     }
 }

@@ -19,7 +19,8 @@ impl ErrorPayload {
 #[derive(Debug)]
 pub enum ApiError {
     BadInput(String),
-    IOError(String)
+    IOError(String),
+    InternalError(String),
 }
 
 impl fmt::Display for ApiError {
@@ -28,6 +29,7 @@ impl fmt::Display for ApiError {
             // Both underlying errors already impl `Display`, so we defer to
             // their implementations.
             ApiError::BadInput(ref message) => write!(f, "BadInput: {}", message),
+            ApiError::InternalError(ref message) => write!(f, "InternalError: {}", message),
             ApiError::IOError(ref message) => write!(f, "AccessDenied: {}", message),
         }
     }
@@ -37,6 +39,7 @@ impl error::Error for ApiError {
     fn description(&self) -> &str {
         match *self {
             ApiError::BadInput(ref message) => message,
+            ApiError::InternalError(ref message) => message,
             ApiError::IOError(ref message) => message
         }
     }
@@ -44,6 +47,7 @@ impl error::Error for ApiError {
     fn cause(&self) -> Option<&error::Error> {
         match *self {
             ApiError::BadInput(_) => None,
+            ApiError::InternalError(_) => None,
             ApiError::IOError(_) => None
         }
     }
@@ -61,10 +65,16 @@ impl From<::std::io::Error> for ApiError {
     }
 }
 
+impl From<rustc_serialize::json::EncoderError> for ApiError {
+    fn from(err: rustc_serialize::json::EncoderError) -> Self {
+        ApiError::InternalError(format!("Internal Error: Caused by {}", err))
+    }
+}
+
 #[macro_export]
 macro_rules! apitry {
-    ($result:expr, $message:expr) => (apitry!($result, $message, iron::status::InternalServerError));
-    ($result:expr, $message:expr, $status:expr) => {
+    ($result:expr) => (apitry!($result, iron::status::InternalServerError));
+    ($result:expr, $status:expr) => {
         match $result {
             ::std::result::Result::Ok(val) => val,
             ::std::result::Result::Err(err) => {

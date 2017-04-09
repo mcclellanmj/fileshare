@@ -35,12 +35,10 @@ impl Handler for CreateDirectoryHandler {
     fn handle(&self, req: &mut Request) -> IronResult<Response> {
         let mut request_body = String::new();
         apitry!(req.body.read_to_string(&mut request_body), 
-            "Unable to read request body",
             status::BadRequest);
 
         let create_directory_request: CreateDirectoryRequest = apitry!(
             json::decode(&request_body),
-            "Could not parse json",
             status::BadRequest
         );
 
