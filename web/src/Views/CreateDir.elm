@@ -2,15 +2,18 @@ module Views.CreateDir exposing (load, update, Msg, Model, render)
 
 import Files
 import Html exposing (Html, div, text, h1, input)
-import Html.Attributes as Attributes
 import Debug
-import Html.Events
 import Http
 import Result.Extra
 import Service
 import Navigation
 import AddressableStates
+
 import Bootstrap.Button as Button
+import Bootstrap.Form as Form
+import Bootstrap.Form.Input as Input
+import Bootstrap.Grid as Grid
+import Bootstrap.Grid.Col as Col
 
 type Msg
   = DoCreate String
@@ -40,16 +43,24 @@ update model msg =
 
 render : Model -> Html Msg
 render model =
-  div []
-    [ h1 [] [ text "Create Directory" ]
-    , input
-        [ Attributes.type_ "text"
-        , Html.Events.onInput InputDirectoryName]
-        []
-    , div []
-        [ Button.button
-          [ Button.primary ]
-          [ text "Create Directory" ]
+  Grid.row
+    []
+    [ Grid.col []
+      [ h1 [] [ text "Create Directory" ]
+      , Form.form []
+        [ Form.row []
+          [ Form.col [ Col.sm2 ] [ Form.label [] [ text "Name" ]]
+          , Form.col [ Col.sm10 ] [ Input.text  [ Input.onInput InputDirectoryName ]]
+          ]
+        , Form.row []
+          [ Form.col []
+            [ Button.button
+              [ Button.primary
+              , Button.onClick (DoCreate model.directoryName)
+              ]
+              [ text "Create" ]
+            ]
+          ]
         ]
+      ]
     ]
-
