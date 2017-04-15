@@ -5,15 +5,14 @@ use iron::{Request, Response, IronResult};
 use iron::middleware::Handler;
 use iron::status;
 
+use rustc_serialize::json;
+
 use std::path::{PathBuf};
 use std::fs::create_dir;
 use std::io::Read;
 
 use apierror;
-
 use filetools;
-
-use rustc_serialize::json;
 
 #[derive(RustcDecodable, RustcEncodable, Debug)]
 struct CreateDirectoryRequest {
@@ -45,7 +44,13 @@ impl Handler for CreateDirectoryHandler {
         let mut request_path = PathBuf::from(create_directory_request.base_path);
         request_path.push(create_directory_request.new_directory);
 
-        let is_child = itry!(filetools::is_child_of_safe(&self.root_folder, &request_path.parent().unwrap().to_path_buf()));
+        let is_child = apitry!(
+            filetools::is_child_of_safe(
+                &self.root_folder,
+                &request_path.parent().unwrap().to_path_buf()
+            ),
+            status::BadRequest
+        );
 
         if !is_child {
             Ok(Response::with((status::BadRequest, "Trying to create directory outside of root")))

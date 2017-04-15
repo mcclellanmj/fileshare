@@ -106,7 +106,11 @@ impl DownloadHandler {
 impl Handler for DownloadHandler {
     fn handle(&self, req: &mut Request) -> IronResult<Response> {
         let serve_dir = self.root_folder.clone();
-        let query = apitry!(req.url.query().ok_or(apierror::ApiError::BadInput("Missing url query segment".to_string())), status::BadRequest);
+        let query = apitry!(
+            req.url.query().ok_or(
+                apierror::ApiError::BadInput("Missing url query segment".to_string())),
+                status::BadRequest
+        );
 
         let filepath = {
             let params = form_urlencoded::parse(query.as_bytes());
