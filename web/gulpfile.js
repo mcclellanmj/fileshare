@@ -16,7 +16,7 @@ gulp.task('clean', function() {
 
 gulp.task('copy-css', function() {
   return gulp.src(
-    [ 'bower_components/pure/pure.css'
+    [ 'bower_components/bootstrap/dist/css/bootstrap.css'
     , 'app.css'
     ]).pipe(gulp.dest('build/css'));
 });

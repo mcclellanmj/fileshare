@@ -4,13 +4,13 @@ import Files
 import Html exposing (Html, div, text, h1, input)
 import Html.Attributes as Attributes
 import Debug
-import Pure
 import Html.Events
 import Http
 import Result.Extra
 import Service
 import Navigation
 import AddressableStates
+import Bootstrap.Button as Button
 
 type Msg
   = DoCreate String
@@ -47,11 +47,9 @@ render model =
         , Html.Events.onInput InputDirectoryName]
         []
     , div []
-        [ Html.button
-          [ Attributes.classList [(Pure.buttonPrimary, True)]
-          , Html.Events.onClick (DoCreate model.directoryName)
-          ]
-          [text "Create Directory"]
+        [ Button.button
+          [ Button.primary ]
+          [ text "Create Directory" ]
         ]
     ]
 

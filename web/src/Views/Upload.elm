@@ -4,7 +4,6 @@ import Files
 import Html exposing (Html, div, h1, text, input)
 import Html.Attributes exposing (type_, multiple, classList)
 import Html.Events
-import Pure
 import UI.Components as Components
 import AddressableStates
 import FileReader exposing (NativeFile, parseSelectedFiles)
@@ -15,6 +14,8 @@ import List.Extra
 
 import Service
 import Css
+
+import Bootstrap.Button as Button
 
 type UploadStatus
   = NotStarted
@@ -197,11 +198,9 @@ renderUploadForm model =
   let
     extraContent = case model.state of
       Selected x ->
-        [ Html.button
-          [ classList [(Pure.buttonPrimary, True)]
-          , Html.Events.onClick (UploadFiles x)
-          ]
-          [text "Upload"]
+        [ Button.button
+          [ Button.primary ]
+          [ text "Upload" ]
         ]
       _ -> []
 

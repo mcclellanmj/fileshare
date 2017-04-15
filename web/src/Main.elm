@@ -8,6 +8,8 @@ import Views.Folder
 import Views.Upload
 import Views.CreateDir
 
+import Bootstrap.Grid as Grid
+
 -- Model
 type alias Model = { componentModel: ComponentModel }
 
@@ -109,4 +111,5 @@ view model =
       CreateDirModel componentModel -> Html.map CreateDirMsg (Views.CreateDir.render componentModel)
       ErrorModel reason -> div [] [text reason]
   in
-    div [ withId Container ] [ contents ]
+    Grid.container []
+      [ div [ withId Container ] [ contents ] ]

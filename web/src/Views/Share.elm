@@ -4,18 +4,16 @@ import Html exposing (Html, div, span, text, a)
 import Html.Attributes exposing (style, classList, href)
 import Html.Events exposing (onClick, onSubmit)
 import Service exposing (File)
-import AttributesExtended as AttrExt
 import FontAwesome.Web as Icons
-import Pure
 import UI.Components as Components
-import Css as ShareCss
 import AddressableStates as States
 import Files exposing (FilePath)
 import Service exposing (ShareResult)
 import Http
-import Task
 import Errors
 import Result.Extra
+
+import Bootstrap.Button as Button
 
 type State
   = Input
@@ -57,7 +55,7 @@ render model =
       case model.state of
         Input -> Html.form
           [ onSubmit (DoShare "mcclellan.mj@gmail.com")
-          , classList [ (Pure.formStacked, True)]
+          , classList []
           ]
           [ text "Email"
           , Html.label
@@ -69,8 +67,8 @@ render model =
               ]
               []
             ]
-          , Html.button
-            [ classList [ (Pure.button, True), (Pure.buttonPrimary, True) ] ]
+          , Button.button
+            [ Button.primary ]
             [ Icons.share_alt, text "Share it" ]
           ]
         Sharing -> text "Sharing"
