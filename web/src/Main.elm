@@ -20,12 +20,14 @@ type ComponentModel
   | CreateDirModel Views.CreateDir.Model
   | ErrorModel String
 
-initialModel : Model
-initialModel =
-  { componentModel = FolderModel Views.Folder.initialModel }
-
 init : Navigation.Location -> ( Model, Cmd Msg )
-init location = ( initialModel, Task.perform UrlChange (Task.succeed location) )
+init location =
+  let
+    (folderModel, folderCmds) = Views.Folder.initialModel
+    urlCmd = Task.perform UrlChange (Task.succeed location)
+    liftedFolderCmd = Cmd.map FolderMsg folderCmds
+  in
+    ( { componentModel = FolderModel folderModel }, Cmd.batch [liftedFolderCmd, urlCmd] )
 
 type Msg
   = FolderMsg Views.Folder.Msg
@@ -48,6 +50,7 @@ subscriptions : Model -> Sub Msg
 subscriptions currentModel =
   case currentModel.componentModel of
     UploadModel uploadModel -> Sub.map UploadMsg (Views.Upload.subscriptions uploadModel)
+    FolderModel folderModel -> Sub.map FolderMsg (Views.Folder.subscriptions folderModel)
     _ -> Sub.none
 
 urlUpdate : Model -> Navigation.Location -> (Model, Cmd Msg)

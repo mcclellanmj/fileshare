@@ -1,4 +1,4 @@
-module Views.Folder exposing (render, update, Model, Msg, initialModel, loadFiles)
+module Views.Folder exposing (render, update, Model, Msg, initialModel, loadFiles, subscriptions)
 
 import Service
 import Files
@@ -14,9 +14,16 @@ import AttributesExtended
 import Result.Extra
 import Task
 
+import Bootstrap.Grid
+import Bootstrap.Grid.Col
+import Bootstrap.Grid.Row
+
+import Bootstrap.Navbar as Navbar
+
 type Msg
   = DirectoryFetched (List Service.File)
   | DirectoryFetchFailed Http.Error
+  | NavbarMsg Navbar.State
   | ShowMenu
   | HideMenu
 
@@ -33,16 +40,21 @@ type alias Model =
   { path: Files.FilePath
   , files: Files
   , menuActive: Bool
+  , navbarState: Navbar.State
   }
 
-loadingModel : Files.FilePath -> Model
+loadingModel : Files.FilePath -> (Model, Cmd Msg)
 loadingModel filePath =
-  { path = filePath
-  , files = NotLoaded
-  , menuActive = False
-  }
+  let
+    (navbarState, navbarCmd) = Navbar.initialState NavbarMsg
+  in
+    ({ path = filePath
+    , files = NotLoaded
+    , menuActive = False
+    , navbarState = navbarState
+    }, navbarCmd)
 
-initialModel : Model
+initialModel : (Model, Cmd Msg)
 initialModel = loadingModel ""
 
 update : Model -> Msg -> (Model, Cmd Msg)
@@ -52,31 +64,31 @@ update model msg =
     DirectoryFetchFailed error -> ({ model | files = Error error }, Cmd.none)
     ShowMenu -> ({ model | menuActive = True }, Cmd.none)
     HideMenu -> ({ model | menuActive = False }, Cmd.none)
+    NavbarMsg state -> ({ model | navbarState = state }, Cmd.none)
 
 fetchCmd: String -> Cmd Msg
 fetchCmd path =
   Http.send (Result.Extra.unpack DirectoryFetchFailed DirectoryFetched) (Service.fetchFiles path)
 
 loadFiles : Files.FilePath -> (Model, Cmd Msg)
-loadFiles path = ( loadingModel path, fetchCmd path )
+loadFiles path =
+  let
+    (initialModel, navbarCmd) = loadingModel path
+  in
+    ( initialModel, Cmd.batch [fetchCmd path, navbarCmd] )
 
+-- TODO: Header menu needs a revamp, maybe use bootstrap
 renderHeader: Model -> Html Msg
 renderHeader model =
-  let
-    menuAction = if model.menuActive == True then HideMenu else ShowMenu
-  in
-    div [ style [("padding", "5px"), ("display", "flex"), ("background-color", "black"), ("color", "white")] ]
-      [ span [] [text model.path]
-      , div [style [("margin-left", "auto")]]
-        [ a
-          [ AttributesExtended.voidHref
-          , onClick menuAction
-          , classList [("menu-link", True), ("menu-active", model.menuActive == True)]
-          ]
-          -- [FontAwesome.navicon]
-          [text "menu"]
-        ]
+  Navbar.config NavbarMsg
+    |> Navbar.withAnimation
+    |> Navbar.inverse
+    |> Navbar.brand [ href "#" ] [ text model.path ]
+    |> Navbar.items
+      [ Navbar.itemLink [ href (AddressableStates.generateUploadAddress model.path) ] [ text "Upload File" ]
+      , Navbar.itemLink [ href (AddressableStates.generateCreateAddress model.path) ] [ text "CreateDirectory" ]
       ]
+    |> Navbar.view model.navbarState
 
 menuLinkTo : MenuLink -> Html Msg
 menuLinkTo link =
@@ -85,15 +97,6 @@ menuLinkTo link =
       Upload directory -> ("Upload File", AddressableStates.generateUploadAddress directory)
       CreateDirectory directory -> ("Create Directroy", AddressableStates.generateCreateAddress directory)
   in a [ href url ] [ text linkText]
-
-renderMenu: Files.FilePath -> Html Msg
-renderMenu directory =
-  div [ Css.withClass Css.MenuHeader ]
-    [ ul [ Css.withClass Css.MenuList ]
-      [ li [] [menuLinkTo <| Upload directory]
-      , li [] [menuLinkTo <| CreateDirectory directory]
-      ]
-    ]
 
 renderFile: String -> Service.File -> Html Msg
 renderFile currentDir file =
@@ -141,9 +144,13 @@ renderFiles files currentDir =
 render : Model -> Html Msg
 render model =
   let
-    content = if model.menuActive then renderMenu model.path else renderFiles model.files model.path
+    content = renderFiles model.files model.path
   in
     div []
       [ renderHeader model
       , content
       ]
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+  Navbar.subscriptions model.navbarState NavbarMsg

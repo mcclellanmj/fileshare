@@ -1,7 +1,6 @@
-- Add the create folder function
 - Update to bootstrap 4 elm module
-- Make menu slide out
 - Remote the Files.elm file and replace with Path.elm
+- Make menu slide out
 - Clean up the package.json/bower.json and remove no longer used libraries
 - Error Message screen needs to be more informative and provide a path back
   - Maybe enable automatic reporting of the error as well
