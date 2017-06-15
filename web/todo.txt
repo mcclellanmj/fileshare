@@ -1,4 +1,4 @@
-- Update to bootstrap 4 elm module
+- Fix issue where modal changes don't cause the parent to update
 - Remote the Files.elm file and replace with Path.elm
 - Make menu slide out
 - Clean up the package.json/bower.json and remove no longer used libraries
