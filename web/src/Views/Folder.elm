@@ -4,7 +4,7 @@ import Service
 import Files
 import Html exposing (Html, div, span, text, a, ul, li)
 import Html.Attributes exposing (style, classList, href)
-import Html.Events exposing (onClick, onSubmit)
+import Html.Events exposing (onClick)
 import FontAwesome.Web as FontAwesome
 import Css
 import Errors
@@ -12,11 +12,7 @@ import Http
 import AddressableStates
 import AttributesExtended
 import Result.Extra
-import Task
-
-import Bootstrap.Grid
-import Bootstrap.Grid.Col
-import Bootstrap.Grid.Row
+import Modals.CreateDir
 
 import Bootstrap.Navbar as Navbar
 
@@ -24,8 +20,7 @@ type Msg
   = DirectoryFetched (List Service.File)
   | DirectoryFetchFailed Http.Error
   | NavbarMsg Navbar.State
-  | ShowMenu
-  | HideMenu
+  | CreateDirMsg Modals.CreateDir.Msg
 
 type MenuLink
   = Upload String
@@ -41,6 +36,7 @@ type alias Model =
   , files: Files
   , menuActive: Bool
   , navbarState: Navbar.State
+  , modalState: Modals.CreateDir.Model
   }
 
 loadingModel : Files.FilePath -> (Model, Cmd Msg)
@@ -52,6 +48,7 @@ loadingModel filePath =
     , files = NotLoaded
     , menuActive = False
     , navbarState = navbarState
+    , modalState = Modals.CreateDir.initialState
     }, navbarCmd)
 
 initialModel : (Model, Cmd Msg)
@@ -62,9 +59,12 @@ update model msg =
   case msg of
     DirectoryFetched files -> ({ model | files = Loaded files }, Cmd.none)
     DirectoryFetchFailed error -> ({ model | files = Error error }, Cmd.none)
-    ShowMenu -> ({ model | menuActive = True }, Cmd.none)
-    HideMenu -> ({ model | menuActive = False }, Cmd.none)
     NavbarMsg state -> ({ model | navbarState = state }, Cmd.none)
+    CreateDirMsg createDirMsg ->
+      let
+        (newModel, cmd) = Modals.CreateDir.update model.modalState createDirMsg
+      in
+        ({ model | modalState = newModel }, Cmd.map CreateDirMsg cmd)
 
 fetchCmd: String -> Cmd Msg
 fetchCmd path =
@@ -77,16 +77,14 @@ loadFiles path =
   in
     ( initialModel, Cmd.batch [fetchCmd path, navbarCmd] )
 
--- TODO: Header menu needs a revamp, maybe use bootstrap
 renderHeader: Model -> Html Msg
 renderHeader model =
   Navbar.config NavbarMsg
     |> Navbar.withAnimation
-    |> Navbar.inverse
-    |> Navbar.brand [ href "#" ] [ text model.path ]
+    |> Navbar.brand [ AttributesExtended.voidHref ] [ text model.path ]
     |> Navbar.items
       [ Navbar.itemLink [ href (AddressableStates.generateUploadAddress model.path) ] [ text "Upload File" ]
-      , Navbar.itemLink [ href (AddressableStates.generateCreateAddress model.path) ] [ text "CreateDirectory" ]
+      , Navbar.itemLink [ AttributesExtended.voidHref, onClick (CreateDirMsg (Modals.CreateDir.ShowModal model.path) )] [ text "CreateDirectory" ]
       ]
     |> Navbar.view model.navbarState
 
@@ -148,6 +146,7 @@ render model =
   in
     div []
       [ renderHeader model
+      , Html.map CreateDirMsg <| Modals.CreateDir.view model.modalState
       , content
       ]
 
